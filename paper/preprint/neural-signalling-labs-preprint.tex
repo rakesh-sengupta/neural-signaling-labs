@@ -1,8 +1,6 @@
 % =====================================================================
 %  Neural Signalling Labs: preprint for EdArXiv
 %  Build: pdflatex, bibtex, pdflatex, pdflatex
-%  Text marked with \authornote{...} (printed in red) must be completed or
-%  checked by the author before posting.
 % =====================================================================
 \documentclass[11pt,a4paper]{article}
 \usepackage[T1]{fontenc}
@@ -158,12 +156,12 @@ Prediction Lab & reward response below half; transfer to the cue & trial 3; tria
 % ---------------------------------------------------------------------
 \section{Classroom use}
 
-The module was developed for \emph{Introduction to Neuroscience}, a four-credit psychology elective at Krea University, India, taken by undergraduates and doctoral students and taught from \citet{bear2016}. It grew out of feedback from the course's teaching assistant after a class on membrane potentials: the slides were hard to follow at a glance, and students struggled to keep up. Rewriting the decks in an at-a-glance format raised a further question, whether students could \emph{do} each idea beside the slide rather than only watch it. Spike Lab came first. Relay Lab followed when the syllabus had to be shortened and three textbook sessions were combined into one class. Prediction Lab began as the course's second quiz and became a rehearsal for the end-term examination, which uses the same read--replicate--explain format with a different paper.
+The module was developed for PSYC343 \emph{Introduction to Neuroscience}, an undergraduate psychology course at Krea University, India, taught from \citet{bear2016}. It grew out of feedback from a teaching assistant after a class on membrane potentials: the slides were hard to follow at a glance, and students struggled to keep up. Rewriting the decks in an at-a-glance format raised a further question, whether students could \emph{do} each idea beside the slide rather than only watch it. Spike Lab came first. Relay Lab followed when the syllabus had to be shortened and three textbook sessions were combined into one class. Prediction Lab began as the course's second quiz and became a rehearsal for the end-term examination, which uses the same read--replicate--explain format with a different paper.
 
-\authornote{Author to complete: dates of use, cohort size and composition, and what was observed in class (for example, completion of lab parts, questions students asked, difficulties, the teaching assistant's observations). Report only informal observations here unless data were collected with ethics approval.}
+All three labs, with their slides and booklets, were introduced in class to a cohort of 45 undergraduate students in 2026. In class, students said that they enjoyed the lab sessions. No data were collected from students, so this is an informal impression rather than evidence of learning; a formal evaluation is planned (Section~\ref{sec:limits}).
 
 % ---------------------------------------------------------------------
-\section{Limitations and planned evaluation}
+\section{Limitations and planned evaluation}\label{sec:limits}
 
 The labs have not yet been evaluated for learning gains. The models are deliberately simplified: Spike Lab is a cold invertebrate axon; Relay Lab's conduction speeds are rules of thumb, its EPSPs are larger than real ones and its receptor kinetics are qualitative; Prediction Lab's neuron is a display of a learning rule, not a fitted model of dopamine cell physiology. The assessment format depends on students being able to read a primary paper in English within the time allowed, which the reading guide supports but does not guarantee. Finally, the pacing passwords and the start password can be found by anyone who reads the page source; they organise a class but do not secure an examination.
 
@@ -171,19 +169,19 @@ A planned evaluation, subject to institutional ethics approval, will compare con
 
 \section{Availability and adaptation}
 
-The module is available at \repo{} and runs at \site. Code is released under the MIT licence; booklets, slides, documentation and figures under CC BY 4.0. Version 1.0.0 is archived at Zenodo \authornote{add DOI after archiving}. The repository includes an instructor guide (learning objectives, timings, pacing passwords, the assessment format and how to adapt everything), model notes, contribution guidelines and the test suite. Slides and booklets are LaTeX sources; changing one link per file updates every QR code. Instructors can fork the repository and serve their own copy with GitHub Pages or any web server.
+The module is available at \repo{} and runs at \site. Code is released under the MIT licence; booklets, slides, documentation and figures under CC BY 4.0. The repository includes an instructor guide (learning objectives, timings, pacing passwords, the assessment format and how to adapt everything), model notes, contribution guidelines and the test suite. Slides and booklets are LaTeX sources; changing one link per file updates every QR code. Instructors can fork the repository and serve their own copy with GitHub Pages or any web server.
 
 \section*{Declarations}
 
-\paragraph{Use of generative AI.} The lab code, booklets, slides, tests and drafts of this article were developed with the assistance of Claude (Anthropic), a generative AI model, working to the author's specifications. The author designed the pedagogy and the assessment, chose the models, checked content against the cited sources, tested the labs, reviewed all materials and takes full responsibility for them.
+\paragraph{Use of generative AI.} Claude (Anthropic), a generative AI model, was used to assist with checking and debugging the lab code. The author reviewed all changes and takes full responsibility for the code and materials.
 
-\paragraph{Ethics.} No data from students were collected or analysed for this article. \authornote{Revise if the classroom-use section reports data.}
+\paragraph{Ethics.} No data were collected from students for this article, so ethics approval was not required. The classroom-use section reports only the author's informal observations. The labs themselves store and send no data.
 
-\paragraph{Funding.} \authornote{State funding, or ``This work received no specific funding.''}
+\paragraph{Funding.} This work received no specific funding.
 
-\paragraph{Competing interests.} \authornote{Confirm: ``The author declares no competing interests.''}
+\paragraph{Competing interests.} The author declares no competing interests.
 
-\paragraph{Acknowledgements.} I thank the students and the teaching assistant of \emph{Introduction to Neuroscience} at Krea University for their feedback. \authornote{Name the teaching assistant with their permission.}
+\paragraph{Acknowledgements.} I thank the teaching assistants of PSYC343, Judith Grace Lazarus and Namrita Thakur, for their feedback on the slides and labs, and the students of the course for their enthusiasm.
 
 \bibliographystyle{apalike}
 \bibliography{references}

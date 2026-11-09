@@ -7,9 +7,10 @@ The three labs follow one arc, from a single neuron to behaviour:
 3. **Prediction Lab**: what a population of dopamine neurons signals, by replicating a classic
    paper.
 
-They were written for *Introduction to Neuroscience*, a psychology elective at Krea University
-(India), taught with Bear, Connors & Paradiso, *Neuroscience: Exploring the Brain*
-(Chapters 3–6). They assume no biology beyond school level and no programming.
+They were written for PSYC343 *Introduction to Neuroscience*, an undergraduate psychology course
+at Krea University (India), taught with Bear, Connors & Paradiso, *Neuroscience: Exploring the
+Brain* (Chapters 3–6), and were first used there in 2026 with a cohort of 45 students. They
+assume no biology beyond school level and no programming.
 
 ## Learning objectives
 

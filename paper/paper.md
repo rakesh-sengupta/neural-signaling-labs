@@ -98,11 +98,10 @@ one assumption, is a question in the assessment.
 
 # Experience of use
 
-[AUTHOR TO COMPLETE: when each lab was first used, the course, cohort size and level, and what
-you observed. For example: "Spike Lab and Relay Lab were used in *Introduction to Neuroscience*
-at Krea University in November 2026 with N psychology undergraduates and PhD students;
-Prediction Lab and its booklet formed the second in-class quiz." Add one or two concrete
-observations, such as where students struggled or what the teaching assistant reported.]
+All three labs, with their slides and booklets, were introduced in 2026 to a cohort of 45
+undergraduate students in PSYC343 *Introduction to Neuroscience* at Krea University. In class, students said that they
+enjoyed the lab sessions. No data were collected from students, so this is an informal
+impression rather than evidence of learning; a formal evaluation is planned.
 
 # Story of the project
 
@@ -116,10 +115,9 @@ read, replicate and explain a classic study.
 
 # Acknowledgements
 
-I thank the students and the teaching assistant of *Introduction to Neuroscience* at Krea
-University for their feedback. The lab code, booklets, slides, tests and a draft of this paper
-were developed with the assistance of Claude (Anthropic), a generative AI model, working to the
-author's specifications. The author designed the pedagogy, chose and checked the models
-against the cited sources, reviewed all materials and takes responsibility for them.
+I thank the teaching assistants of PSYC343, Judith Grace Lazarus and Namrita Thakur, for their
+feedback on the slides and labs, and the students of the course for their enthusiasm. Claude
+(Anthropic), a generative AI model, was used to assist with checking and debugging the lab code;
+the author reviewed all changes and takes full responsibility for the code and materials.
 
 # References
