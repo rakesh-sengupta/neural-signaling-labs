@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Prediction Lab</title>
+<meta name="description" content="Replicate Schultz, Dayan and Montague (1997): dopamine neurons and reward prediction error, in the browser. Nothing is saved or sent.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: a lab bench. Plot on the left, controls and findings on the right; stacks on phones. */
+:root {
+  --bg: #F3F1EC; --panel: #FFFFFF; --ink: #1C2433; --muted: #5B6475; --rule: #D8D4CB;
+  --accent: #1F3A5F; --ok: #23665A; --warn: #A12F24; --stage: #FBFAF7; --grid: #E6E2D9;
+  --na: #B85A0E; --k: #6A3D9A; --trace: #1F3A5F; --ghost: #9AA6B8; --stim: #23665A;
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", Arial, sans-serif;
+  --font-num: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12161E; --panel: #1A202B; --ink: #E8EAF0; --muted: #A3ABBA; --rule: #2E3646;
+    --accent: #9DB7DD; --ok: #6FC3AE; --warn: #F08A7E; --stage: #161B24; --grid: #273041;
+    --na: #F2994A; --k: #B79CE8; --trace: #E8EAF0; --ghost: #5D6A80; --stim: #6FC3AE;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12161E; --panel: #1A202B; --ink: #E8EAF0; --muted: #A3ABBA; --rule: #2E3646;
+  --accent: #9DB7DD; --ok: #6FC3AE; --warn: #F08A7E; --stage: #161B24; --grid: #273041;
+  --na: #F2994A; --k: #B79CE8; --trace: #E8EAF0; --ghost: #5D6A80; --stim: #6FC3AE;
+  color-scheme: dark;
+}
+html, body { min-height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 17px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 10px;
+}
+*, *::before, *::after { box-sizing: border-box; }
+.app { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
+.topbar { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; border-bottom: 2px solid var(--rule); padding-block: 4px 8px; }
+.topbar h1 { font-size: 1.05rem; margin: 0; color: var(--accent); letter-spacing: 0.02em; }
+.topbar .note { font-size: 0.85rem; color: var(--muted); }
+#jspsych-target { min-height: 70vh; display: flex; flex-direction: column; }
+
+/* jsPsych essentials (inlined) */
+.jspsych-display-element { display: flex; flex-direction: column; font-family: var(--font-body); font-size: 17px; line-height: 1.5; }
+.jspsych-display-element:focus { outline: none; }
+.jspsych-content-wrapper { display: flex; align-items: flex-start; margin: 0 auto; flex: 1 1 100%; width: 100%; }
+.jspsych-content { max-width: 100%; width: 100%; text-align: left; margin: 0 auto !important; }
+.jspsych-btn, .btn {
+  display: inline-block; font: 700 1rem var(--font-body); cursor: pointer;
+  padding: 12px 24px; border-radius: 10px; border: 2px solid var(--accent);
+  background: var(--accent); color: var(--bg); touch-action: manipulation;
+}
+.btn2 { font: 700 0.95rem var(--font-body); padding: 9px 16px; border-radius: 10px; border: 2px solid var(--accent); background: transparent; color: var(--accent); cursor: pointer; }
+.jspsych-btn:focus-visible, .btn:focus-visible, .btn2:focus-visible, input:focus-visible, button:focus-visible { outline: 3px solid var(--na); outline-offset: 2px; }
+.jspsych-html-button-response-btngroup { display: flex; justify-content: center; margin-top: 16px; }
+
+/* reading column */
+.read { max-width: 42rem; margin: 8px auto; display: flex; flex-direction: column; gap: 12px; }
+.read h2 { font-size: 1.6rem; line-height: 1.2; margin: 0; text-wrap: balance; }
+.read p { margin: 0; }
+.eyebrow { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.calm { background: var(--panel); border-left: 4px solid var(--ok); padding: 10px 14px; border-radius: 6px; }
+.partlist { margin: 0; padding-left: 1.3rem; display: flex; flex-direction: column; gap: 4px; }
+
+/* lab bench */
+.bench-head { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+.bench-head h2 { margin: 0; font-size: 1.45rem; line-height: 1.2; }
+.glance { background: var(--panel); border-left: 4px solid var(--na); padding: 8px 12px; border-radius: 6px; font-weight: 700; color: var(--accent); }
+.bench { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+@media (max-width: 860px) { .bench { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 12px 14px; min-width: 0; }
+.card h3 { margin: 0 0 8px; font-size: 0.95rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.plotwrap { position: relative; width: 100%; }
+canvas { display: block; width: 100%; background: var(--stage); border-radius: 8px; }
+.readout { margin-top: 8px; font-size: 1.05rem; font-weight: 700; min-height: 1.6em; }
+.readout .num { font-family: var(--font-num); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.85rem; color: var(--muted); margin-top: 6px; }
+.sw { display: inline-block; width: 18px; height: 4px; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
+.ctrl { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.ctrl label { font-weight: 700; display: flex; justify-content: space-between; gap: 8px; }
+.ctrl .val { font-family: var(--font-num); font-weight: 600; color: var(--accent); }
+input[type=range] { width: 100%; accent-color: var(--accent); min-height: 32px; }
+.toggle { display: flex; align-items: center; gap: 10px; padding: 6px 0; font-weight: 700; }
+.toggle input { width: 22px; height: 22px; accent-color: var(--warn); }
+.toggle small { font-weight: 400; color: var(--muted); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.steps { margin: 0; padding-left: 1.3rem; display: flex; flex-direction: column; gap: 3px; }
+.field { display: flex; flex-direction: column; gap: 3px; margin-bottom: 10px; }
+.field label { font-size: 0.95rem; }
+.field .inrow { display: flex; gap: 8px; align-items: center; }
+.field input { font: 600 1rem var(--font-num); width: 6.5rem; padding: 6px 8px; border-radius: 8px; border: 2px solid var(--rule); background: var(--stage); color: var(--ink); }
+.fb { font-size: 0.9rem; }
+.fb.ok { color: var(--ok); } .fb.hint { color: var(--warn); }
+.q { margin-bottom: 12px; }
+.q p { margin: 0 0 6px; font-weight: 700; }
+.opts { display: flex; flex-direction: column; gap: 6px; }
+.opt { text-align: left; font: 400 0.95rem var(--font-body); padding: 8px 12px; border-radius: 8px; border: 2px solid var(--rule); background: var(--stage); color: var(--ink); cursor: pointer; }
+.opt.right { border-color: var(--ok); }
+.opt.wrong { border-color: var(--warn); }
+.done { background: var(--panel); border: 1px dashed var(--ok); border-radius: 10px; padding: 8px 12px; font-size: 0.95rem; }
+.navrow { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.tiny { font-size: 0.82rem; color: var(--muted); }
+.copyline { font-family: var(--font-num); font-size: 0.98rem; background: var(--panel); border: 1px dashed var(--accent); border-radius: 8px; padding: 10px 12px; user-select: all; overflow-wrap: anywhere; }
+table.sum { border-collapse: collapse; width: 100%; font-size: 0.95rem; }
+table.sum td { border-bottom: 1px solid var(--rule); padding: 6px 4px; vertical-align: top; }
+table.sum td.v { font-family: var(--font-num); text-align: right; white-space: nowrap; }
+.loadmsg { margin: auto; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+table.lanetbl { border-collapse: collapse; width: 100%; font-size: 0.92rem; margin-top: 8px; }
+table.lanetbl th { text-align: left; font-weight: 700; color: var(--muted); font-size: 0.8rem; border-bottom: 1px solid var(--rule); padding: 4px; }
+table.lanetbl td { border-bottom: 1px solid var(--rule); padding: 5px 4px; }
+table.lanetbl td.v { font-family: var(--font-num); text-align: right; white-space: nowrap; }
+.sw2 { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 6px; }
+.inputs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 10px; }
+.inputs label { display: flex; align-items: center; gap: 8px; font-weight: 700; padding: 6px 8px; border: 1px solid var(--rule); border-radius: 8px; background: var(--stage); }
+.inputs input { width: 22px; height: 22px; }
+.tagE { color: var(--ok); } .tagI { color: var(--warn); }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg label { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border: 1px solid var(--rule); border-radius: 8px; background: var(--stage); font-size: 0.95rem; }
+.seg input { width: 18px; height: 18px; accent-color: var(--accent); }
+.sub { margin: 10px 0 4px; font-weight: 700; font-size: 0.95rem; }
+.gate { max-width: 34rem; }
+.pwrow { display: flex; flex-direction: column; gap: 6px; }
+.pwrow label { font-weight: 700; }
+.pwrow .inrow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.pwrow input { font: 600 1.15rem var(--font-num); width: 12rem; max-width: 100%; padding: 8px 10px; border-radius: 8px; border: 2px solid var(--rule); background: var(--stage); color: var(--ink); }
+/* ---- Prediction Lab additions ---- */
+.stage { position: relative; background: var(--stage); border: 1px solid var(--rule); border-radius: 12px; min-height: 260px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 18px; }
+.lamp { width: 96px; height: 96px; border-radius: 50%; background: var(--grid); border: 3px solid var(--rule); }
+.lamp.on { background: #F2B035; border-color: #B85A0E; box-shadow: 0 0 28px 6px rgba(242,176,53,0.55); }
+.star { height: 64px; font-size: 56px; line-height: 64px; color: var(--ok); visibility: hidden; font-weight: 700; }
+.star.on { visibility: visible; }
+.stagecount { position: absolute; top: 8px; right: 12px; font: 600 0.85rem var(--font-num); color: var(--muted); }
+.press { font: 700 1.25rem var(--font-body); width: 100%; max-width: 22rem; min-height: 72px; border-radius: 14px; border: 3px solid var(--accent);
+  background: var(--panel); color: var(--accent); cursor: pointer; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+.press:active { background: var(--accent); color: var(--panel); }
+table.rt { border-collapse: collapse; width: 100%; font-size: 0.95rem; }
+table.rt th { text-align: left; font-weight: 700; color: var(--muted); font-size: 0.8rem; border-bottom: 1px solid var(--rule); padding: 4px; }
+table.rt td { border-bottom: 1px solid var(--rule); padding: 6px 4px; vertical-align: top; }
+table.rt td.v { font-family: var(--font-num); text-align: right; white-space: nowrap; }
+.heatkey { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--muted); flex-wrap: wrap; }
+.heatbar { width: 150px; height: 12px; border-radius: 3px; border: 1px solid var(--rule); }
+.pill { display: inline-block; font: 600 0.85rem var(--font-num); padding: 2px 8px; border-radius: 999px; border: 1px solid var(--rule); background: var(--stage); }
+.probe { display: flex; flex-direction: column; gap: 6px; }
+.probe label { display: flex; gap: 8px; align-items: flex-start; padding: 6px 8px; border: 1px solid var(--rule); border-radius: 8px; cursor: pointer; }
+.probe input { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--accent); flex: none; }
+.menu { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 8px; }
+.menu .btn2 { text-align: left; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <h1>Prediction Lab</h1>
+    <span class="note">Introduction to Neuroscience · Quiz 2 · replicating Schultz, Dayan &amp; Montague (1997) · nothing is saved or sent</span>
+  </header>
+  <div id="jspsych-target"><p class="loadmsg">Loading the lab…</p></div>
+</div>
+
+<script src="../../lib/jspsych-7.3.4.min.js"></script>
+<script src="../../lib/plugin-html-button-response-1.2.0.min.js"></script>
+<script>
+(function () {
+  "use strict";
+  var target = document.getElementById("jspsych-target");
+  if (typeof initJsPsych !== "function" || typeof jsPsychHtmlButtonResponse === "undefined") {
+    target.innerHTML = '<div class="read"><h2>The lab could not load</h2><p>Check your internet connection and reload this page.</p></div>';
+    return;
+  }
+  var PT = jsPsychModule.ParameterType;
+  var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------------- start password ----------------
+     The lab opens only with the word shown on the quiz slide, so nobody starts early.
+     Change it here and in the quiz slides (\startpw). Case and spaces are ignored.
+     This paces the class; it is not security (the word is in the page). */
+  var START_PASSWORD = "juice";
+
+  /* ---------------- helpers ---------------- */
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  function setupCanvas(cv, h) {
+    var w = cv.parentElement.clientWidth, dpr = window.devicePixelRatio || 1;
+    cv.style.height = h + "px"; cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    var ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx: ctx, w: w, h: h };
+  }
+  function norm(w) { return String(w || "").toLowerCase().replace(/[^a-z0-9]/g, ""); }
+  function fmt1(v) { return (Math.round(v * 10) / 10).toFixed(1); }
+  function fmt2(v) { var s = (Math.round(v * 100) / 100).toFixed(2); return s === "-0.00" ? "0.00" : s; }
+  function signed(v) { return (v > 0.004 ? "+" : "") + fmt2(v); }
+
+  /* =======================================================================
+     THE MODEL: temporal-difference (TD) learning, as in Schultz, Dayan &
+     Montague (1997), Eqs. 3-5. Each light is represented as a chain of
+     signals x_i (1 exactly i time steps after the light came on), each with
+     its own weight w_i. Prediction V(t) = sum_i w_i x_i(t).
+     Prediction error delta(t) = r(t) + gamma V(t+1) - V(t).
+     Learning: w_i += alpha * sum_t x_i(t) delta(t), once per trial.
+     Time steps are 100 ms; a trial runs from -1 s to +2 s.
+     ======================================================================= */
+  var N = 30, DT = 0.1, T0 = -1.0, GAMMA = 0.98, ALPHA = 0.3;
+  function stepOf(t) { return Math.round((t - T0) / DT); }
+  function timeOf(n) { return T0 + n * DT; }
+  function newModel() { return { L1: new Float64Array(N + 1), L2: new Float64Array(N + 1) }; }
+  function tdRun(m, trial, learn, alphaScale) {
+    var V = new Float64Array(N + 1), r = new Float64Array(N + 1), d = new Float64Array(N);
+    trial.rewards.forEach(function (rw) { var k = stepOf(rw.t); if (k >= 0 && k < N) r[k] += rw.size; });
+    for (var n = 0; n <= N; n++) {
+      var v = 0;
+      trial.cues.forEach(function (c) { var i = n - stepOf(c.t); if (i >= 1 && i <= N) v += m[c.id][i]; });
+      V[n] = v;
+    }
+    for (n = 0; n < N; n++) d[n] = r[n] + GAMMA * V[n + 1] - V[n];
+    if (learn) {
+      var a = ALPHA * (alphaScale == null ? 1 : alphaScale);
+      trial.cues.forEach(function (c) {
+        var s = stepOf(c.t);
+        for (var k = 0; k < N; k++) { var i = k - s; if (i >= 1 && i <= N) m[c.id][i] += a * d[k]; }
+      });
+    }
+    return { V: V, d: d };
+  }
+  var ONE = [{ id: "L1", t: 0 }], TWO = [{ id: "L1", t: 0 }, { id: "L2", t: 0.5 }];
+  function trained(cues, n) { var m = newModel(); for (var k = 0; k < n; k++) tdRun(m, { cues: cues, rewards: [{ t: 1.0, size: 1 }] }, true); return m; }
+
+  /* ---- from prediction error to spikes ----
+     The neuron fires at random (Poisson) at a basal rate of 5 spikes/s, within the
+     0.5-7 spikes/s of real dopamine neurons. A positive error adds 30 spikes/s per unit
+     for 100 ms; a negative error lowers the rate for 200 ms. Both start 50 ms after
+     the event, like the real burst latency. */
+  var BASE = 5, GAIN = 30;
+  function rateFn(d) {
+    return function (t) {
+      var r = BASE, up = 0, down = 1;
+      for (var n = 0; n < N; n++) {
+        var e = d[n]; if (Math.abs(e) < 1e-3) continue;
+        var t0 = timeOf(n) + 0.05;
+        if (e > 0 && t >= t0 && t < t0 + 0.1) up += GAIN * e;
+        if (e < 0 && t >= t0 && t < t0 + 0.2) down = Math.min(down, Math.max(0, 1 + e));
+      }
+      return r * down + up;
+    };
+  }
+  function recordTrials(d, nTrials) {
+    var f = rateFn(d), trials = [];
+    for (var k = 0; k < nTrials; k++) {
+      var sp = [];
+      for (var ms = 0; ms < 3000; ms++) { var t = T0 + ms / 1000; if (Math.random() < f(t) / 1000) sp.push(t + Math.random() / 1000); }
+      trials.push(sp);
+    }
+    return trials;
+  }
+  function windowRate(trials, a, b) {
+    var c = 0; trials.forEach(function (sp) { sp.forEach(function (t) { if (t >= a && t < b) c++; }); });
+    return c / (trials.length * (b - a));
+  }
+
+  /* ---- raster + histogram, like Fig. 1 of the paper ---- */
+  function drawRaster(cv, trials, marks) {
+    var narrow = cv.parentElement.clientWidth < 520;
+    var g = setupCanvas(cv, narrow ? 300 : 340), ctx = g.ctx, L = 44, R = 12, W = g.w - L - R;
+    var x = function (t) { return L + (t - T0) / 3 * W; };
+    ctx.clearRect(0, 0, g.w, g.h);
+    var histT = 20, histH = narrow ? 88 : 106, rasT = histT + histH + 14, rasH = g.h - rasT - 44;
+    // histogram (100 ms bins)
+    var bins = new Array(30).fill(0);
+    trials.forEach(function (sp) { sp.forEach(function (t) { var b = Math.floor((t - T0) / 0.1); if (b >= 0 && b < 30) bins[b]++; }); });
+    var rates = bins.map(function (c) { return trials.length ? c / (trials.length * 0.1) : 0; });
+    var yMax = 40, y = function (v) { return histT + histH - Math.min(v, yMax) / yMax * histH; };
+    ctx.font = "12px " + css("--font-num"); ctx.strokeStyle = css("--grid"); ctx.fillStyle = css("--muted"); ctx.lineWidth = 1;
+    [0, 20, 40].forEach(function (v) { ctx.beginPath(); ctx.moveTo(L, y(v)); ctx.lineTo(L + W, y(v)); ctx.stroke(); ctx.textAlign = "right"; ctx.textBaseline = "middle"; ctx.fillText(String(v), L - 6, y(v)); });
+    ctx.textAlign = "left"; ctx.textBaseline = "top"; ctx.fillText("spikes/s", 2, 0);
+    ctx.setLineDash([4, 4]); ctx.strokeStyle = css("--ghost"); ctx.beginPath(); ctx.moveTo(L, y(BASE)); ctx.lineTo(L + W, y(BASE)); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = css("--trace");
+    rates.forEach(function (v, b) { var x0 = x(T0 + b * 0.1) + 1, x1 = x(T0 + (b + 1) * 0.1) - 1; ctx.fillRect(x0, y(v), Math.max(1, x1 - x0), histT + histH - y(v)); });
+    // raster
+    ctx.strokeStyle = css("--rule"); ctx.strokeRect(L, rasT, W, rasH);
+    var rowH = trials.length ? rasH / trials.length : 0;
+    ctx.fillStyle = css("--trace");
+    trials.forEach(function (sp, k) { var yy = rasT + (k + 0.5) * rowH; sp.forEach(function (t) { ctx.beginPath(); ctx.arc(x(t), yy, narrow ? 1.4 : 1.7, 0, 6.3); ctx.fill(); }); });
+    // event marks
+    marks.forEach(function (mk, i) {
+      ctx.strokeStyle = mk.color; ctx.lineWidth = 2; ctx.setLineDash(mk.missing ? [5, 4] : []);
+      ctx.beginPath(); ctx.moveTo(x(mk.t), histT); ctx.lineTo(x(mk.t), rasT + rasH); ctx.stroke(); ctx.setLineDash([]); ctx.lineWidth = 1;
+      ctx.fillStyle = mk.color; ctx.font = "bold 12px " + css("--font-body"); ctx.textAlign = "center"; ctx.textBaseline = "top";
+      ctx.fillText(mk.label, x(mk.t), rasT + rasH + 16 + (i % 2) * 14);   // alternate rows so close labels never overlap
+    });
+    ctx.fillStyle = css("--muted"); ctx.font = "12px " + css("--font-num"); ctx.textBaseline = "top";
+    [-1, 0, 1].forEach(function (t) { ctx.textAlign = "center"; ctx.fillText(String(t), x(t), rasT + rasH + 2); });
+    ctx.textAlign = "right"; ctx.fillText("2 s", L + W + 6, rasT + rasH + 2);
+    ctx.save(); ctx.translate(12, rasT + rasH / 2); ctx.rotate(-Math.PI / 2); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("trials", 0, 0); ctx.restore();
+  }
+  var COL = { light: function () { return css("--na"); }, juice: function () { return css("--ok"); } };
+
+  /* =======================================================================
+     PAGE TEXT
+     ======================================================================= */
+  var PARTS = {
+    1: { eyebrow: "Part 1 of 4 · booklet Section B1", title: "Be the monkey", glance: "A light comes on; a star follows one second later. You learn when to expect it.",
+         steps: ["Press <b>Start</b>. Each trial: the light comes on, then a star appears.", "Press the big button (or the space bar) <b>as soon as you see the star</b>.", "24 trials, about 90 seconds. Some trials are different: keep going.", "Copy the four numbers from the table into your booklet."] },
+    2: { eyebrow: "Part 2 of 4 · booklet Section B2", title: "Record a dopamine neuron", glance: "Replicate Fig. 1: before learning, after learning, and when the juice is withheld.",
+         steps: ["<b>Before training</b>, record <b>Light then juice</b>. Note the three rates.", "Press <b>Train: 150 pairings</b>.", "Record <b>Light then juice</b> again, then <b>Light, juice withheld</b>, then <b>Juice, no light</b>.", "Copy each set of rates into your booklet."] },
+    3: { eyebrow: "Part 3 of 4 · booklet Section B3", title: "Watch it learn", glance: "Replicate Fig. 3: the response moves from the juice back to the light.",
+         steps: ["Keep <b>one light</b> and the withheld juice on trial 50. Press <b>Run 80 trials</b>.", "Move the slider through the trials. Find when the juice response fell below half, and when the light response became the biggest.", "Tick the <b>dopamine receptor blocker</b> and run again. Find the same two trials.", "Try <b>two lights</b>: which light ends up with the response?"] },
+    4: { eyebrow: "Part 4 of 4 · booklet Section B4", title: "Test the theory", glance: "The neuron is fully trained. Change what happens and see what it reports.",
+         steps: ["Choose a test and press <b>Record 30 trials</b>.", "Read the rates at 0, 0.5, 1.0 and 1.5 s.", "Do all seven tests. Predict each one before you record it."] }
+  };
+  function headHTML(P) { return '<div class="bench-head"><span class="eyebrow">' + P.eyebrow + '</span><h2>' + P.title + '</h2><div class="glance">' + P.glance + '</div></div>'; }
+  function stepsHTML(P) { return '<div class="card"><h3>Steps</h3><ol class="steps">' + P.steps.map(function (s) { return "<li>" + s + "</li>"; }).join("") + '</ol></div>'; }
+  function navHTML(part) {
+    var label = part === "4" ? "Finish: summary →" : (part === "menu" ? "" : "Next part →");
+    return '<div class="navrow"><span class="tiny">Nothing you do here is saved or sent. Write your numbers in the booklet.</span><button class="btn" id="next">' + label + '</button></div>';
+  }
+
+  var LAB = { p1: null };
+
+  /* =======================================================================
+     PART 1 · Be the monkey: a light, then a star 1 s later.
+     Probe trials: star withheld (14, 19, 23) or 0.5 s early (16, 21).
+     ======================================================================= */
+  var P1_PLAN = (function () { var a = []; for (var i = 1; i <= 24; i++) a.push("N"); [14, 19, 23].forEach(function (k) { a[k - 1] = "O"; }); [16, 21].forEach(function (k) { a[k - 1] = "E"; }); return a; })();
+  function p1Summary(res) {
+    function mean(xs) { return xs.length ? xs.reduce(function (s, v) { return s + v; }, 0) / xs.length : null; }
+    var first = res.filter(function (r) { return r.kind === "N" && r.k <= 4 && r.rt != null; }).map(function (r) { return r.rt; });
+    var lastIdx = [15, 17, 18, 20, 22, 24];
+    var last = res.filter(function (r) { return lastIdx.indexOf(r.k) >= 0 && r.rt != null; }).map(function (r) { return r.rt; });
+    var early = res.filter(function (r) { return r.kind === "E" && r.rt != null; }).map(function (r) { return r.rt; });
+    var om = res.filter(function (r) { return r.kind === "O"; });
+    var omPressed = om.filter(function (r) { return r.press != null; });
+    return { first: mean(first), last: mean(last), early: mean(early), omN: omPressed.length, omT: mean(omPressed.map(function (r) { return r.press; })) };
+  }
+  function msTxt(v) { if (v == null) return "–"; var s = Math.round(v * 1000); return s + " ms"; }
+
+  /* =======================================================================
+     THE LAB PLUGIN
+     ======================================================================= */
+  function PredLab(jsPsych) { this.jsPsych = jsPsych; }
+  PredLab.info = { name: "prediction-lab", parameters: { part: { type: PT.STRING, default: "1" } } };
+  PredLab.prototype.trial = function (el, trial) {
+    var self = this, part = trial.part, P = PARTS[part];
+    try { window.scrollTo(0, 0); } catch (e) {}
+    var cleanup = [];
+    function finish(extra) { cleanup.forEach(function (f) { f(); }); var d = { part: part }; if (extra) for (var k in extra) d[k] = extra[k]; self.jsPsych.finishTrial(d); }
+    function onResize(fn) { var h = function () { fn(); }; window.addEventListener("resize", h); cleanup.push(function () { window.removeEventListener("resize", h); }); }
+
+    if (part === "1") buildBehaviour();
+    else if (part === "2") buildRecord();
+    else if (part === "3") buildLearn();
+    else if (part === "4") buildTest();
+    else buildMenu();
+
+    /* ---------- Part 1 ---------- */
+    function buildBehaviour() {
+      el.innerHTML = headHTML(P) + '<div class="bench"><div class="card"><h3>The task</h3>' +
+        '<div class="stage" id="stage"><span class="stagecount" id="cnt">24 trials</span><div class="lamp" id="lamp" aria-hidden="true"></div><div class="star" id="star" aria-hidden="true">★</div>' +
+        '<button class="press" id="press">Start</button></div>' +
+        '<p class="readout" id="status" aria-live="polite">Press Start when you are ready.</p></div>' +
+        '<div style="display:flex;flex-direction:column;gap:12px;min-width:0">' + stepsHTML(P) +
+        '<div class="card"><h3>Your results</h3><div id="p1res"><p class="tiny" style="margin:0">They appear here after trial 24.</p></div></div></div></div>' + navHTML(part);
+      var lamp = el.querySelector("#lamp"), star = el.querySelector("#star"), btn = el.querySelector("#press"), status = el.querySelector("#status"), cnt = el.querySelector("#cnt");
+      var running = false, k = 0, res = [], cur = null, timers = [];
+      function later(f, ms) { var id = setTimeout(f, ms); timers.push(id); return id; }
+      cleanup.push(function () { timers.forEach(clearTimeout); document.removeEventListener("keydown", onKey); });
+      function now() { return performance.now(); }
+      function respond() {
+        if (!running) { start(); return; }
+        if (cur && cur.on && cur.press == null) { cur.press = (now() - cur.t0) / 1000; }
+      }
+      function onKey(e) { if (e.code === "Space" || e.key === " ") { e.preventDefault(); respond(); } }
+      document.addEventListener("keydown", onKey);
+      btn.addEventListener("pointerdown", function (e) { e.preventDefault(); respond(); });
+      btn.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); respond(); } });
+      function start() { running = true; k = 0; res = []; btn.textContent = "Press when the star appears"; status.textContent = "Watch the light."; next(); }
+      function next() {
+        if (k >= 24) { done(); return; }
+        k++; cnt.textContent = "Trial " + k + " of 24";
+        var kind = P1_PLAN[k - 1], iti = 900 + Math.random() * 800;
+        lamp.classList.remove("on"); star.classList.remove("on");
+        later(function () {
+          cur = { k: k, kind: kind, t0: now(), on: true, press: null };
+          lamp.classList.add("on");
+          var starAt = kind === "E" ? 0.5 : 1.0, end = kind === "O" ? 2.0 : starAt + 1.0;
+          if (kind !== "O") later(function () { star.classList.add("on"); cur.starT = (now() - cur.t0) / 1000; later(function () { star.classList.remove("on"); }, 400); }, starAt * 1000);
+          later(function () {
+            cur.on = false; lamp.classList.remove("on"); star.classList.remove("on");
+            var rt = (cur.press != null && kind !== "O") ? cur.press - starAt : null;
+            res.push({ k: cur.k, kind: kind, press: cur.press, rt: rt });
+            next();
+          }, end * 1000);
+        }, iti);
+      }
+      function done() {
+        running = false; cnt.textContent = "Done"; btn.textContent = "Do it again"; status.textContent = "Finished. Copy your numbers into the booklet.";
+        var s = p1Summary(res); LAB.p1 = s;
+        el.querySelector("#p1res").innerHTML = '<table class="rt"><tr><th>What</th><th style="text-align:right">Your number</th></tr>' +
+          '<tr><td>Time from star to press, trials 1–4</td><td class="v">' + msTxt(s.first) + '</td></tr>' +
+          '<tr><td>Time from star to press, last 6 ordinary trials</td><td class="v">' + msTxt(s.last) + '</td></tr>' +
+          '<tr><td>Time from star to press, the 2 early-star trials</td><td class="v">' + msTxt(s.early) + '</td></tr>' +
+          '<tr><td>No-star trials (3): how many you pressed in</td><td class="v">' + s.omN + ' of 3</td></tr>' +
+          '<tr><td>…and when you pressed (after the light came on)</td><td class="v">' + msTxt(s.omT) + '</td></tr></table>' +
+          '<p class="tiny" style="margin:8px 0 0">A negative time means you pressed before the star appeared: you were predicting it.</p>';
+      }
+      el.querySelector("#next").addEventListener("click", function () { finish(); });
+    }
+
+    /* ---------- Part 2 ---------- */
+    function buildRecord() {
+      var st = { m: newModel(), n: 0, cond: "LJ", rec: null };
+      el.innerHTML = headHTML(P) + '<div class="bench"><div class="card"><h3>Recording <span class="pill" id="lbl">nothing yet</span></h3><div class="plotwrap"><canvas id="cv" role="img" aria-label="Raster and histogram of the neuron"></canvas></div>' +
+        '<table class="rt" id="tbl" style="margin-top:8px"></table>' +
+        '<p class="tiny" style="margin:8px 0 0">Top: spikes per second (100 ms bins; dashed line = resting rate). Bottom: each row is one trial, each dot one spike. Recording does not change what the neuron has learned.</p></div>' +
+        '<div style="display:flex;flex-direction:column;gap:12px;min-width:0">' + stepsHTML(P) +
+        '<div class="card"><h3>Training</h3><p style="margin:0 0 8px">Pairings so far: <span class="pill" id="ntr">0</span></p>' +
+        '<div class="row"><button class="btn" id="train">Train: 150 pairings</button><button class="btn2" id="reset">Start over (untrained)</button></div></div>' +
+        '<div class="card"><h3>Record</h3><div class="probe" role="radiogroup">' +
+        '<label><input type="radio" name="cond" value="LJ" checked> Light then juice (juice at 1.0 s)</label>' +
+        '<label><input type="radio" name="cond" value="LO"> Light, juice withheld</label>' +
+        '<label><input type="radio" name="cond" value="J"> Juice, no light</label></div>' +
+        '<div class="row" style="margin-top:8px"><button class="btn" id="go">Record 30 trials</button></div></div></div></div>' + navHTML(part);
+      var cv = el.querySelector("#cv");
+      function cond() { return el.querySelector("input[name=cond]:checked").value; }
+      function trialOf(c) { return c === "LJ" ? { cues: ONE, rewards: [{ t: 1.0, size: 1 }] } : c === "LO" ? { cues: ONE, rewards: [] } : { cues: [], rewards: [{ t: 1.0, size: 1 }] }; }
+      var NAMES = { LJ: "light then juice", LO: "light, juice withheld", J: "juice, no light" };
+      function marks(c) {
+        var m = [];
+        if (c !== "J") m.push({ t: 0, label: "light", color: COL.light() });
+        m.push({ t: 1.0, label: c === "LO" ? "(no juice)" : "juice", color: COL.juice(), missing: c === "LO" });
+        return m;
+      }
+      function draw() {
+        if (!st.rec) { drawRaster(cv, [], marks(cond())); el.querySelector("#tbl").innerHTML = ""; return; }
+        drawRaster(cv, st.rec.trials, marks(st.rec.c));
+        var tr = st.rec.trials;
+        el.querySelector("#tbl").innerHTML = '<tr><th>Window</th><th style="text-align:right">Spikes per second</th></tr>' +
+          '<tr><td>Resting (−1 to 0 s)</td><td class="v">' + fmt1(windowRate(tr, -1, 0)) + '</td></tr>' +
+          '<tr><td>Just after the light (0.05–0.25 s)</td><td class="v">' + fmt1(windowRate(tr, 0.05, 0.25)) + '</td></tr>' +
+          '<tr><td>Juice time (1.05–1.25 s)</td><td class="v">' + fmt1(windowRate(tr, 1.05, 1.25)) + '</td></tr>';
+      }
+      el.querySelector("#train").addEventListener("click", function () {
+        var b = this; b.disabled = true; var left = 150;
+        (function chunk() {
+          var k = Math.min(10, left); for (var i = 0; i < k; i++) tdRun(st.m, { cues: ONE, rewards: [{ t: 1.0, size: 1 }] }, true);
+          left -= k; st.n += k; el.querySelector("#ntr").textContent = st.n;
+          if (left > 0) setTimeout(chunk, reduceMotion ? 0 : 40); else b.disabled = false;
+        })();
+      });
+      el.querySelector("#reset").addEventListener("click", function () { st.m = newModel(); st.n = 0; st.rec = null; el.querySelector("#ntr").textContent = "0"; el.querySelector("#lbl").textContent = "nothing yet"; draw(); });
+      el.querySelector("#go").addEventListener("click", function () {
+        var c = cond(), o = tdRun(st.m, trialOf(c), false);
+        st.rec = { c: c, trials: recordTrials(o.d, 30) };
+        el.querySelector("#lbl").textContent = NAMES[c] + " · " + (st.n ? st.n + " pairings" : "untrained");
+        draw();
+      });
+      el.querySelectorAll("input[name=cond]").forEach(function (r) { r.addEventListener("change", function () { if (!st.rec) draw(); }); });
+      draw(); onResize(draw);
+      el.querySelector("#next").addEventListener("click", function () { finish(); });
+    }
+
+    /* ---------- Part 3 ---------- */
+    function buildLearn() {
+      var st = { runs: null, k: 1, opts: null };
+      el.innerHTML = headHTML(P) + '<div class="bench"><div class="card"><h3>Prediction error, trial by trial</h3>' +
+        '<div class="plotwrap"><canvas id="hm" role="img" aria-label="Prediction error for each trial and time"></canvas></div>' +
+        '<div class="heatkey"><span>worse than predicted</span><span class="heatbar" id="hbar"></span><span>better than predicted</span></div>' +
+        '<div class="ctrl" style="margin-top:10px"><label for="k">Look at trial <span class="val" id="kv">1</span></label><input id="k" type="range" min="1" max="80" step="1" value="1" disabled></div>' +
+        '<div class="plotwrap"><canvas id="ln" role="img" aria-label="Prediction error in the chosen trial"></canvas></div>' +
+        '<p class="readout" id="ro" aria-live="polite"></p></div>' +
+        '<div style="display:flex;flex-direction:column;gap:12px;min-width:0">' + stepsHTML(P) +
+        '<div class="card"><h3>Set up</h3><div class="seg" role="radiogroup" style="margin-bottom:8px"><label><input type="radio" name="nc" value="1" checked> One light (0 s)</label><label><input type="radio" name="nc" value="2"> Two lights (0 s, 0.5 s)</label></div>' +
+        '<label class="toggle" style="color:var(--ink)"><input type="checkbox" id="om" checked style="accent-color:var(--accent)"> Withhold the juice on trial 50</label>' +
+        '<label class="toggle"><input type="checkbox" id="bl"> Dopamine receptor blocker <small>(learning at half strength)</small></label>' +
+        '<div class="row" style="margin-top:6px"><button class="btn" id="go">Run 80 trials</button></div></div></div></div>' + navHTML(part);
+      var hm = el.querySelector("#hm"), ln = el.querySelector("#ln"), slider = el.querySelector("#k");
+      function colorFor(v) {
+        var a = Math.min(1, Math.abs(v)); if (a < 0.01) return null;
+        var c = v > 0 ? [242, 153, 74] : [123, 92, 190];
+        return "rgba(" + c[0] + "," + c[1] + "," + c[2] + "," + (0.12 + 0.88 * a) + ")";
+      }
+      el.querySelector("#hbar").style.background = "linear-gradient(90deg, rgba(123,92,190,1), rgba(123,92,190,0.12) 48%, transparent 50%, rgba(242,153,74,0.12) 52%, rgba(242,153,74,1))";
+      function lightMarks() { var m = [{ t: 0, label: st.opts && st.opts.two ? "light 1" : "light", color: COL.light() }]; if (st.opts && st.opts.two) m.push({ t: 0.5, label: "light 2", color: COL.light() }); m.push({ t: 1.0, label: "juice", color: COL.juice() }); return m; }
+      function drawHeat() {
+        var narrow = hm.parentElement.clientWidth < 520;
+        var g = setupCanvas(hm, narrow ? 260 : 310), ctx = g.ctx, L = 44, R = 12, T = 8, B = 46, W = g.w - L - R, H = g.h - T - B;
+        ctx.clearRect(0, 0, g.w, g.h);
+        var x = function (t) { return L + (t - T0) / 3 * W; };
+        ctx.fillStyle = css("--stage"); ctx.fillRect(L, T, W, H);
+        if (st.runs) {
+          var rh = H / st.runs.length, cw = W / N;
+          st.runs.forEach(function (d, k) { for (var n = 0; n < N; n++) { var c = colorFor(d[n]); if (c) { ctx.fillStyle = c; ctx.fillRect(L + n * cw, T + k * rh, Math.ceil(cw), Math.ceil(rh)); } } });
+          ctx.strokeStyle = css("--ink"); ctx.lineWidth = 1.5; ctx.strokeRect(L, T + (st.k - 1) * rh, W, Math.max(2, rh));
+        }
+        ctx.strokeStyle = css("--rule"); ctx.lineWidth = 1; ctx.strokeRect(L, T, W, H);
+        lightMarks().forEach(function (mk, i) { ctx.strokeStyle = mk.color; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(x(mk.t), T); ctx.lineTo(x(mk.t), T + H); ctx.stroke(); ctx.setLineDash([]);
+          ctx.fillStyle = mk.color; ctx.font = "bold 12px " + css("--font-body"); ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.fillText(mk.label, x(mk.t), T + H + 16 + (i % 2) * 14); });
+        ctx.fillStyle = css("--muted"); ctx.font = "12px " + css("--font-num"); ctx.textBaseline = "top";
+        [-1, 0, 1].forEach(function (t) { ctx.textAlign = "center"; ctx.fillText(String(t), x(t), T + H + 2); });
+        ctx.textAlign = "right"; ctx.fillText("2 s", L + W + 6, T + H + 2);
+        ctx.textAlign = "right"; ctx.textBaseline = "middle"; ctx.fillText("1", L - 6, T + 6); ctx.fillText("80", L - 6, T + H - 6);
+        ctx.save(); ctx.translate(12, T + H / 2); ctx.rotate(-Math.PI / 2); ctx.textAlign = "center"; ctx.fillText("trial", 0, 0); ctx.restore();
+      }
+      function drawLine() {
+        var g = setupCanvas(ln, 150), ctx = g.ctx, L = 44, R = 12, T = 10, B = 22, W = g.w - L - R, H = g.h - T - B;
+        ctx.clearRect(0, 0, g.w, g.h);
+        var x = function (t) { return L + (t - T0) / 3 * W; }, y = function (v) { return T + (1.1 - v) / 2.2 * H; };
+        ctx.font = "12px " + css("--font-num"); ctx.strokeStyle = css("--grid"); ctx.fillStyle = css("--muted");
+        [-1, 0, 1].forEach(function (v) { ctx.beginPath(); ctx.moveTo(L, y(v)); ctx.lineTo(L + W, y(v)); ctx.stroke(); ctx.textAlign = "right"; ctx.textBaseline = "middle"; ctx.fillText(String(v), L - 6, y(v)); });
+        ctx.textBaseline = "top"; [-1, 0, 1].forEach(function (t) { ctx.textAlign = "center"; ctx.fillText(String(t), x(t), T + H + 4); }); ctx.textAlign = "right"; ctx.fillText("2 s", L + W + 6, T + H + 4);
+        if (!st.runs) return;
+        var d = st.runs[st.k - 1], cw = W / N;
+        for (var n = 0; n < N; n++) { if (Math.abs(d[n]) < 0.005) continue; ctx.fillStyle = d[n] > 0 ? css("--na") : css("--k"); var y0 = y(0), y1 = y(d[n]); ctx.fillRect(L + n * cw + 1, Math.min(y0, y1), Math.max(1, cw - 2), Math.abs(y1 - y0)); }
+      }
+      function readout() {
+        if (!st.runs) { el.querySelector("#ro").textContent = "Press Run 80 trials."; return; }
+        var d = st.runs[st.k - 1], big = 0, at = 0;
+        for (var n = 0; n < N; n++) if (d[n] > big + 1e-9) { big = d[n]; at = n; }
+        var txt = "Trial <span class=num>" + st.k + "</span>" + (st.opts.omit && st.k === 50 ? " (juice withheld)" : "") + ": at the light <span class=num>" + signed(d[stepOf(0)]) + "</span>";
+        if (st.opts.two) txt += " · at light 2 <span class=num>" + signed(d[stepOf(0.5)]) + "</span>";
+        txt += " · at juice time <span class=num>" + signed(d[stepOf(1.0)]) + "</span>";
+        txt += big > 0.02 ? " · biggest positive response at <span class=num>" + fmt1(timeOf(at)) + " s</span>" : " · no positive response";
+        el.querySelector("#ro").innerHTML = txt;
+      }
+      function redraw() { drawHeat(); drawLine(); readout(); }
+      el.querySelector("#go").addEventListener("click", function () {
+        var two = el.querySelector("input[name=nc]:checked").value === "2", omit = el.querySelector("#om").checked, block = el.querySelector("#bl").checked;
+        var m = newModel(), cues = two ? TWO : ONE, runs = [];
+        for (var k = 1; k <= 80; k++) { var o = tdRun(m, { cues: cues, rewards: (omit && k === 50) ? [] : [{ t: 1.0, size: 1 }] }, true, block ? 0.5 : 1); runs.push(o.d); }
+        st.runs = runs; st.opts = { two: two, omit: omit, block: block }; slider.disabled = false; redraw();
+      });
+      slider.addEventListener("input", function () { st.k = +slider.value; el.querySelector("#kv").textContent = st.k; redraw(); });
+      redraw(); onResize(redraw);
+      el.querySelector("#next").addEventListener("click", function () { finish(); });
+    }
+
+    /* ---------- Part 4 ---------- */
+    function buildTest() {
+      var m1 = trained(ONE, 150), m2 = trained(TWO, 150);
+      var TESTS = {
+        a: { name: "As trained: light, juice at 1.0 s", m: m1, tr: { cues: ONE, rewards: [{ t: 1.0, size: 1 }] }, mk: [["light", 0, "l"], ["juice", 1.0, "j"]] },
+        b: { name: "Juice withheld", m: m1, tr: { cues: ONE, rewards: [] }, mk: [["light", 0, "l"], ["(no juice)", 1.0, "j", 1]] },
+        c: { name: "Juice 0.5 s late (at 1.5 s)", m: m1, tr: { cues: ONE, rewards: [{ t: 1.5, size: 1 }] }, mk: [["light", 0, "l"], ["usual", 1.0, "j", 1], ["juice", 1.5, "j"]] },
+        d: { name: "Juice 0.5 s early (at 0.5 s)", m: m1, tr: { cues: ONE, rewards: [{ t: 0.5, size: 1 }] }, mk: [["light", 0, "l"], ["juice", 0.5, "j"], ["usual", 1.0, "j", 1]] },
+        e: { name: "Double the juice", m: m1, tr: { cues: ONE, rewards: [{ t: 1.0, size: 2 }] }, mk: [["light", 0, "l"], ["2× juice", 1.0, "j"]] },
+        f: { name: "Half the juice", m: m1, tr: { cues: ONE, rewards: [{ t: 1.0, size: 0.5 }] }, mk: [["light", 0, "l"], ["½ juice", 1.0, "j"]] },
+        g: { name: "Trained on light 1 → light 2 → juice; light 2 left out", m: m2, tr: { cues: [{ id: "L1", t: 0 }], rewards: [{ t: 1.0, size: 1 }] }, mk: [["light 1", 0, "l"], ["(no light 2)", 0.5, "l", 1], ["juice", 1.0, "j"]] }
+      };
+      var st = { rec: null };
+      el.innerHTML = headHTML(P) + '<div class="bench"><div class="card"><h3>Recording <span class="pill" id="lbl">nothing yet</span></h3><div class="plotwrap"><canvas id="cv" role="img" aria-label="Raster and histogram of the neuron"></canvas></div>' +
+        '<table class="rt" id="tbl" style="margin-top:8px"></table>' +
+        '<p class="tiny" style="margin:8px 0 0">Each window starts 50 ms after its time and lasts 200 ms. Resting rate is about 5 spikes/s; numbers vary a little between recordings, like real data.</p></div>' +
+        '<div style="display:flex;flex-direction:column;gap:12px;min-width:0">' + stepsHTML(P) +
+        '<div class="card"><h3>Choose a test</h3><div class="probe" role="radiogroup">' +
+        Object.keys(TESTS).map(function (k, i) { return '<label><input type="radio" name="tst" value="' + k + '"' + (i ? "" : " checked") + '> <span><b>' + "ABCDEFG"[i] + '.</b> ' + TESTS[k].name + '</span></label>'; }).join("") +
+        '</div><div class="row" style="margin-top:8px"><button class="btn" id="go">Record 30 trials</button></div></div></div></div>' + navHTML(part);
+      var cv = el.querySelector("#cv");
+      function draw() {
+        if (!st.rec) { drawRaster(cv, [], []); el.querySelector("#tbl").innerHTML = ""; return; }
+        var T = TESTS[st.rec.k];
+        drawRaster(cv, st.rec.trials, T.mk.map(function (a) { return { label: a[0], t: a[1], color: a[2] === "l" ? COL.light() : COL.juice(), missing: !!a[3] }; }));
+        var tr = st.rec.trials;
+        el.querySelector("#tbl").innerHTML = '<tr><th>Window</th><th style="text-align:right">Spikes per second</th></tr>' +
+          '<tr><td>Resting (−1 to 0 s)</td><td class="v">' + fmt1(windowRate(tr, -1, 0)) + '</td></tr>' +
+          [0, 0.5, 1.0, 1.5].map(function (t) { return '<tr><td>At ' + t.toFixed(1) + ' s</td><td class="v">' + fmt1(windowRate(tr, t + 0.05, t + 0.25)) + '</td></tr>'; }).join("");
+      }
+      el.querySelector("#go").addEventListener("click", function () {
+        var k = el.querySelector("input[name=tst]:checked").value, T = TESTS[k], o = tdRun(T.m, T.tr, false);
+        st.rec = { k: k, trials: recordTrials(o.d, 30) };
+        el.querySelector("#lbl").textContent = "Test " + "ABCDEFG"[Object.keys(TESTS).indexOf(k)];
+        draw();
+      });
+      draw(); onResize(draw);
+      el.querySelector("#next").addEventListener("click", function () { finish(); });
+    }
+
+    /* ---------- Summary and menu ---------- */
+    function buildMenu() {
+      var s = LAB.p1;
+      var line = s ? ("Part 1: first " + msTxt(s.first) + " | last " + msTxt(s.last) + " | early " + msTxt(s.early) + " | no-star presses " + s.omN + "/3 at " + msTxt(s.omT)) : "Part 1 not done yet";
+      el.innerHTML = '<div class="read"><span class="eyebrow">Summary</span><h2>All four parts done?</h2>' +
+        '<p>Check that every table in Section B of your booklet is filled in. Your Part 1 numbers, in case you need them again:</p>' +
+        '<div class="copyline">' + line + '</div>' +
+        '<p><b>Go back to a part</b> (your training and recordings start fresh):</p>' +
+        '<div class="menu"><button class="btn2" data-go="1">1 · Be the monkey</button><button class="btn2" data-go="2">2 · Record a dopamine neuron</button><button class="btn2" data-go="3">3 · Watch it learn</button><button class="btn2" data-go="4">4 · Test the theory</button></div>' +
+        '<div class="calm"><b>Now answer Sections C and D</b> in your booklet. You can keep this page open.</div></div>';
+      el.querySelectorAll("[data-go]").forEach(function (b) { b.addEventListener("click", function () { finish({ go: b.getAttribute("data-go") }); }); });
+    }
+  };
+
+  /* ---------------- start gate ---------------- */
+  function Gate(jsPsych) { this.jsPsych = jsPsych; }
+  Gate.info = { name: "start-gate", parameters: {} };
+  Gate.prototype.trial = function (el) {
+    var self = this;
+    el.innerHTML = '<div class="read gate"><span class="eyebrow">Quiz 2 · locked until the start</span><h2>Prediction Lab</h2>' +
+      '<div class="calm">Your teacher will show the password on the screen when the quiz begins.</div>' +
+      '<form class="pwrow" id="pwform" autocomplete="off"><label for="pw">Password from the slide</label>' +
+      '<div class="inrow"><input id="pw" type="text" autocapitalize="none" autocorrect="off" spellcheck="false" aria-describedby="pwfb"><button class="btn" type="submit">Unlock</button></div>' +
+      '<div class="fb" id="pwfb" aria-live="polite"></div></form></div>';
+    var inp = el.querySelector("#pw"), fb = el.querySelector("#pwfb");
+    el.querySelector("#pwform").addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      if (norm(inp.value) === norm(START_PASSWORD)) { try { sessionStorage.setItem("predlab-open", "1"); } catch (e) {} self.jsPsych.finishTrial({ gate: true }); }
+      else { fb.className = "fb hint"; fb.textContent = inp.value ? "Not that one. Check the slide." : "Type the word shown on the slide."; inp.select(); }
+    });
+  };
+  function isOpen() { try { return sessionStorage.getItem("predlab-open") === "1"; } catch (e) { return false; } }
+
+  /* ---------------- pages ---------------- */
+  var jsPsych = initJsPsych({ display_element: target });
+  var gate = { timeline: [{ type: Gate }], conditional_function: function () { return !isOpen(); } };
+  var welcome = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus:
+      '<div class="read"><span class="eyebrow">Quiz 2 · Schultz, Dayan &amp; Montague (1997)</span>' +
+      '<h2>Prediction Lab: do dopamine neurons report surprise?</h2>' +
+      '<p>In this lab you replicate the paper’s main findings. You will:</p>' +
+      '<ol class="partlist"><li><b>Be the monkey</b>: learn when a reward will come.</li><li><b>Record a dopamine neuron</b> before and after learning (Fig. 1).</li>' +
+      '<li><b>Watch it learn</b>, trial by trial (Fig. 3).</li><li><b>Test the theory</b> with new situations.</li></ol>' +
+      '<div class="calm">The neuron in Parts 2–4 is a model: the paper’s own learning rule (temporal-difference learning), turned into spikes. <b>Write every number in your booklet</b>: nothing is saved or sent.</div></div>',
+    choices: ["Start Part 1"]
+  };
+  function partTrial(p) { return { type: PredLab, part: p }; }
+  function lastData() { var d = jsPsych.data.get().values(); return d[d.length - 1] || {}; }
+  var menuLoop = {
+    timeline: [partTrial("menu"), { timeline: [{ type: PredLab, part: function () { return lastData().go; } }] }],
+    loop_function: function () { return true; }
+  };
+  jsPsych.run([gate, welcome, partTrial("1"), partTrial("2"), partTrial("3"), partTrial("4"), menuLoop]);
+})();
+</script>
+</body>
+</html>

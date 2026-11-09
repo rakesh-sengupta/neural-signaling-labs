@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Neural Signalling Labs</title>
+<meta name="description" content="Three browser labs for teaching neural signalling to psychology students: the action potential, axons and synapses, and dopamine prediction errors. Free, open source, nothing to install, nothing saved.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+:root {
+  --bg: #F3F1EC; --panel: #FFFFFF; --ink: #1C2433; --muted: #5B6475; --rule: #D8D4CB;
+  --accent: #1F3A5F; --ok: #23665A; --na: #B85A0E;
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", Arial, sans-serif;
+  --font-num: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12161E; --panel: #1A202B; --ink: #E8EAF0; --muted: #A3ABBA; --rule: #2E3646;
+    --accent: #9DB7DD; --ok: #6FC3AE; --na: #F2994A; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12161E; --panel: #1A202B; --ink: #E8EAF0; --muted: #A3ABBA; --rule: #2E3646;
+  --accent: #9DB7DD; --ok: #6FC3AE; --na: #F2994A; color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.55 var(--font-body);
+  padding: 24px max(16px, env(safe-area-inset-right, 0px)) 40px max(16px, env(safe-area-inset-left, 0px)); }
+main { max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+h1 { font-size: clamp(1.7rem, 4vw, 2.4rem); line-height: 1.15; margin: 0; color: var(--accent); text-wrap: balance; }
+.lede { font-size: 1.1rem; margin: 6px 0 0; max-width: 46rem; }
+.facts { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.facts li { border: 1px solid var(--rule); background: var(--panel); border-radius: 999px; padding: 3px 12px; font-size: 0.92rem; }
+.labs { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 14px; }
+.lab { background: var(--panel); border: 1px solid var(--rule); border-top: 5px solid var(--na); border-radius: 12px; padding: 16px 18px;
+  display: flex; flex-direction: column; gap: 8px; }
+.lab h2 { margin: 0; font-size: 1.3rem; }
+.lab .topic { margin: 0; color: var(--muted); font-size: 0.95rem; }
+.lab ol { margin: 0; padding-left: 1.2rem; }
+.lab .go { margin-top: auto; display: inline-block; text-align: center; font-weight: 700; text-decoration: none;
+  background: var(--accent); color: var(--bg); border-radius: 10px; padding: 10px 16px; }
+.lab .go:focus-visible, a:focus-visible { outline: 3px solid var(--na); outline-offset: 2px; }
+.lab .more { font-size: 0.92rem; }
+a { color: var(--accent); }
+section.card { background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 16px 18px; }
+section.card h2 { margin: 0 0 6px; font-size: 1.15rem; }
+section.card p { margin: 0 0 8px; }
+footer { color: var(--muted); font-size: 0.9rem; }
+code { font-family: var(--font-num); font-size: 0.92em; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Neural Signalling Labs</h1>
+    <p class="lede">Three browser labs for teaching how neurons signal, written for psychology students. Students change a model neuron, measure what happens, and replicate classic findings, beside the slides or in an exam.</p>
+  </header>
+
+  <ul class="facts" aria-label="Key facts">
+    <li>Runs on phones and laptops</li><li>Nothing to install</li><li>Nothing is saved or sent</li><li>Light and dark themes</li><li>Free and open source</li>
+  </ul>
+
+  <div class="labs">
+    <article class="lab">
+      <h2>Spike Lab</h2>
+      <p class="topic">The action potential (Hodgkin–Huxley model)</p>
+      <ol><li>Find the threshold</li><li>Watch the sodium and potassium channels; block them</li><li>The refractory period</li><li>Rate coding</li></ol>
+      <a class="go" href="labs/spike-lab/">Open Spike Lab</a>
+      <span class="more"><a href="materials/spike-lab/session09-activity-booklet.pdf">Booklet</a> · <a href="materials/spike-lab/session09-action-potential-slides.pdf">Slides</a></span>
+    </article>
+    <article class="lab">
+      <h2>Relay Lab</h2>
+      <p class="topic">Conduction, synapses and receptors</p>
+      <ol><li>Race spikes along bare and myelinated axons</li><li>Order the steps of a synapse; add up inputs</li><li>Agonists, antagonists and reuptake blockers</li></ol>
+      <a class="go" href="labs/relay-lab/">Open Relay Lab</a>
+      <span class="more"><a href="materials/relay-lab/sessions10-12-activity-booklet.pdf">Booklet</a> · <a href="materials/relay-lab/sessions10-12-relay-slides.pdf">Slides</a> · passwords on the slides</span>
+    </article>
+    <article class="lab">
+      <h2>Prediction Lab</h2>
+      <p class="topic">Replicating Schultz, Dayan &amp; Montague (1997)</p>
+      <ol><li>Be the monkey: learn when a reward comes</li><li>Record a dopamine neuron (Fig. 1)</li><li>Watch prediction errors move (Fig. 3)</li><li>Test the theory, including where it fails</li></ol>
+      <a class="go" href="labs/prediction-lab/">Open Prediction Lab</a>
+      <span class="more"><a href="materials/prediction-lab/quiz2-question-booklet.pdf">Question booklet</a> · start password: <code>juice</code></span>
+    </article>
+  </div>
+
+  <section class="card">
+    <h2>For instructors</h2>
+    <p>Each lab comes with a student booklet; Spike Lab and Relay Lab also have slide decks (LaTeX Beamer). The <a href="https://github.com/rakesh-sengupta/neural-signalling-labs/blob/main/docs/instructor-guide.md">instructor guide</a> gives learning objectives, timings and how to adapt the labs; <a href="https://github.com/rakesh-sengupta/neural-signalling-labs/blob/main/docs/models.md">the model notes</a> say exactly what each simulation does and where it simplifies.</p>
+    <p>Source, issues and tests: <a href="https://github.com/rakesh-sengupta/neural-signalling-labs">github.com/rakesh-sengupta/neural-signalling-labs</a></p>
+  </section>
+
+  <footer>
+    Rakesh Sengupta, Krea University. Code: MIT licence. Booklets, slides and documentation: CC BY 4.0. Built with <a href="https://www.jspsych.org/">jsPsych</a>.
+  </footer>
+</main>
+</body>
+</html>

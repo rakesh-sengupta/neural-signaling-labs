@@ -1,0 +1,352 @@
+% =====================================================================
+%  Introduction to Neuroscience — Quiz 2 (Sessions 7–12): question booklet
+%  Paper: Schultz, Dayan & Montague (1997), Science 275, 1593–1599.
+%  Lab: Prediction Lab (\lablink below). Answer key: NEUR_Quiz2_answer_key.
+%  Format: read a paper, replicate it in a browser lab, answer questions.
+%  90 minutes, 40 marks, open book.
+% =====================================================================
+\documentclass[12pt,a4paper]{article}
+\usepackage[margin=1.9cm,bottom=2.2cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{setspace}
+\setstretch{1.18}
+\usepackage{ragged2e}
+\usepackage{enumitem}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{amssymb}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins}
+\usepackage{fancyhdr}
+\usepackage{textcomp}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.17}
+\usepackage{qrcode}
+\usepackage{url}
+\urlstyle{sf}
+
+\newcommand{\sessnum}{7--12}
+\definecolor{kprimary}{HTML}{1F3A5F}
+\definecolor{kaccent}{HTML}{B85A0E}
+\definecolor{kgreen}{HTML}{23665A}
+\definecolor{kred}{HTML}{A12F24}
+\definecolor{kpale}{HTML}{F7F3EA}
+\definecolor{kgrey}{HTML}{4B5563}
+
+\pagestyle{fancy}\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyfoot[L]{\small\color{kgrey}Introduction to Neuroscience \,$\cdot$\, Quiz 2 (Sessions \sessnum)}
+\fancyfoot[R]{\small\bfseries\color{kprimary}Page \thepage}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+\hyphenpenalty=10000 \exhyphenpenalty=10000 \tolerance=9000 \emergencystretch=3em
+\RaggedRight
+\setlist{itemsep=3pt,topsep=4pt}
+
+\newcommand{\pagehead}[1]{{\color{kprimary}\LARGE\bfseries #1}\par\vspace{2pt}{\color{kaccent}\rule{\linewidth}{1.2pt}}\par\vspace{4pt}}
+\newcommand{\infopill}[2]{{\setlength{\fboxsep}{4pt}\fcolorbox{kaccent}{kaccent!8}{\textbf{#1:}\ #2}}}
+\newcommand{\actinfo}[3]{\infopill{Time}{#1}\hspace{0.5em}\infopill{Who}{#2}\hspace{0.5em}\infopill{You need}{#3}\par\medskip}
+\newcommand{\lines}[1]{\par\foreach \i in {1,...,#1}{\vspace{0.75cm}\hrule height 0.4pt}\par\medskip}
+\newcommand{\blank}[1][3.2cm]{\rule{#1}{0.4pt}}
+\newcommand{\cb}{$\square$\ }
+\newtcolorbox{stepsbox}[1][]{enhanced,colback=kpale,colframe=kprimary,arc=2mm,boxrule=0.8pt,left=8pt,right=8pt,top=5pt,bottom=5pt,
+  halign=flush left,title={\bfseries Steps (tick each one when done)},fonttitle=\normalsize,coltitle=white,#1}
+\newtcolorbox{infobox}[1][]{enhanced,colback=kprimary!4,colframe=kprimary!70,arc=2mm,boxrule=0.6pt,left=8pt,right=8pt,top=4pt,bottom=4pt,
+  halign=flush left,fonttitle=\normalsize\bfseries,coltitle=white,#1}
+\newtcolorbox{studycard}[1][]{enhanced,colback=white,colframe=kgreen,arc=2mm,boxrule=0.8pt,left=7pt,right=7pt,top=3pt,bottom=3pt,
+  halign=flush left,fonttitle=\normalsize\bfseries,coltitle=white,#1}
+
+
+% ---------- at-a-glance additions (v2), same as the deck ----------
+\definecolor{cNa}{HTML}{B85A0E}
+\definecolor{cK}{HTML}{6A3D9A}
+\definecolor{cCl}{HTML}{23665A}
+\definecolor{cCa}{HTML}{A12F24}
+\newcommand{\Na}{\textcolor{cNa}{\textbf{Na$^{+}$}}}
+\newcommand{\K}{\textcolor{cK}{\textbf{K$^{+}$}}}
+\tikzset{
+  ionNa/.style={circle,fill=cNa,text=white,font=\footnotesize\bfseries,inner sep=0pt,minimum size=0.62cm},
+  ionK/.style={circle,fill=cK,text=white,font=\footnotesize\bfseries,inner sep=0pt,minimum size=0.62cm},
+  nb/.style={circle,fill=kprimary,text=white,font=\small\bfseries,inner sep=0pt,minimum size=0.55cm}}
+
+\tikzset{badge/.style={circle,fill=kprimary,text=white,font=\scriptsize\bfseries,inner sep=0pt,minimum size=0.42cm}}
+% ---- links: change here if the lab moves; the QR codes update themselves ----
+\newcommand{\lablink}{https://rakesh-sengupta.github.io/neural-signalling-labs/labs/prediction-lab/}
+\newcommand{\lablinkshown}{rakesh-sengupta.github.io/\\neural-signalling-labs/labs/prediction-lab}
+\newcommand{\paperlink}{https://doi.org/10.1126/science.275.5306.1593}
+\newcommand{\Ca}{\textcolor{cCa}{\textbf{Ca$^{2+}$}}}
+\newcommand{\Cl}{\textcolor{cCl}{\textbf{Cl$^{-}$}}}
+\newcommand{\mk}[1]{\hfill{\color{kaccent}\textbf{[#1]}}}
+\newcommand{\qn}[1]{\par\medskip{\color{kprimary}\textbf{#1}}\ }
+\newcommand{\sectionhead}[3]{\pagehead{#1}{\color{kgrey}\textbf{#2 marks} \,$\cdot$\, about #3 minutes}\par\smallskip}
+\newcommand{\ans}{\cb}
+
+\begin{document}
+\RaggedRight
+
+% ============================ PAGE 1 =================================
+{\color{kprimary}\Huge\bfseries Quiz 2: Prediction and reward}\par\vspace{2pt}
+{\color{kaccent}\rule{\linewidth}{1.2pt}}\par\vspace{4pt}
+{\large Read a paper, replicate it, explain it.}\quad {\color{kgrey}Sessions 7--12 \,$\cdot$\, 90 minutes \,$\cdot$\, 40 marks \,$\cdot$\, open book}
+
+\medskip
+{\renewcommand{\arraystretch}{1.9}
+\begin{tabular}{@{}p{2.3cm}p{8.6cm}p{2cm}p{3.2cm}@{}}
+Name & \blank[8.2cm] & Roll no. & \blank[3cm]\\
+\end{tabular}}
+
+\begin{infobox}[title={The paper}]
+\begin{minipage}[c]{0.8\linewidth}
+Schultz, W., Dayan, P., \& Montague, P.\,R.\ (1997). A neural substrate of prediction and reward. \emph{Science} 275, 1593--1599. Read it on your device (through your library) or on a printed copy.\\[3pt]
+{\small\url{https://doi.org/10.1126/science.275.5306.1593}}
+\end{minipage}\hfill
+\begin{minipage}[c]{0.16\linewidth}\centering\qrcode[height=1.9cm]{\paperlink}\end{minipage}
+\end{infobox}
+
+\begin{infobox}[title={The lab: Prediction Lab (password on the screen)}]
+\begin{minipage}[c]{0.8\linewidth}
+Runs in any browser. Nothing is saved or sent: \textbf{write every number in this booklet}.\\[3pt]
+\textbf{\lablinkshown}
+\end{minipage}\hfill
+\begin{minipage}[c]{0.16\linewidth}\centering\qrcode[height=1.9cm]{\lablink}\end{minipage}
+\end{infobox}
+
+\textbf{Suggested timing} (you may work in any order):
+
+{\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}>{\bfseries}p{3.4cm}p{9.3cm}rr@{}}
+\toprule
+Section & What you do & Marks & Minutes\\
+\midrule
+A Reading & Read the paper with the guide on page 2; answer on page 3 & 10 & 20\\
+B Replicating & Run the four parts of Prediction Lab; fill in pages 4--6 & 15 & 35\\
+C Connecting & Link the paper to Sessions 7--12 (pages 7--8) & 10 & 25\\
+D Thinking & One short argued answer, from a choice of three (page 9) & 5 & 10\\
+\bottomrule
+\end{tabular}}
+
+\medskip
+\begin{stepsbox}[title={\bfseries Rules}]
+\textbf{Open book:} you may use the paper, your booklets, notes and the course slides.\\[2pt]
+\textbf{Your device} is for the paper and the lab only: no messaging, no AI tools, no search.\\[2pt]
+\textbf{Work alone.} If the lab will not load, raise your hand.\\[2pt]
+\textbf{Short answers are fine.} A clear sentence beats a long paragraph. Marks are shown as {\color{kaccent}\textbf{[2]}}.
+\end{stepsbox}
+
+% ============================ PAGE 2 =================================
+\newpage
+\pagehead{Reading guide}
+
+\textbf{The paper in one sentence.} Dopamine neurons do not simply fire when a reward arrives: they fire when a reward is \emph{better than predicted}, stay quiet when it is \emph{as predicted}, and pause when it is \emph{worse than predicted}, exactly like the error signal of a learning rule from computer science.
+
+\medskip
+\textbf{What to read, in this order} (about 15 minutes):
+
+{\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{}>{\bfseries}p{2.6cm}p{13.4cm}@{}}
+\toprule
+Page 1593 & The abstract and the first two columns: what ``prediction'' and ``reward'' mean; blocking.\\
+Page 1594 & \textbf{Read closely:} ``Information encoded in dopaminergic activity'' and \textbf{Fig.~1} with its legend.\\
+Page 1595 & Skim. The equations are the learning rule; you do \emph{not} need to work with them. Read Eq.~3 in words: \emph{error = reward now + prediction of what comes next -- prediction a moment ago}.\\
+Page 1596 & \textbf{Read closely:} the first column (the model's two testable predictions) and \textbf{Fig.~3} with its legend. Skim the maze example.\\
+Pages 1597--1598 & Skim ``Summary and future questions''. Note 18 (page 1598, references) matters for Section D.\\
+\bottomrule
+\end{tabular}}
+
+\medskip
+\textbf{Words you will meet}
+
+{\renewcommand{\arraystretch}{1.22}\small
+\begin{tabular}{@{}>{\bfseries}p{4.3cm}p{11.7cm}@{}}
+\toprule
+dopamine neuron & a neuron that releases dopamine; these are in the midbrain (VTA and substantia nigra) and send axons to the striatum, nucleus accumbens and frontal cortex\\
+CS (conditioned stimulus) & a cue that has come to predict a reward, such as the light\\
+US / primary reward & the reward itself, here a drop of fruit juice\\
+phasic & brief: a burst or a pause lasting a fraction of a second\\
+basal firing rate & the neuron's resting rate of spikes when nothing is happening\\
+raster & a plot with one row per trial and one dot per spike\\
+peri-event time histogram & spikes counted in small time bins and added across trials, lined up on an event\\
+prediction error & reward received minus reward predicted: positive, zero or negative\\
+TD (temporal difference) & a learning rule that updates predictions from one moment to the next\\
+blocking & when an already-predicted reward stops a new cue being learned\\
+\bottomrule
+\end{tabular}}
+
+% ============================ PAGE 3 =================================
+\newpage
+\sectionhead{Section A: Reading the paper}{10}{20}
+
+\qn{A1.} Look at \textbf{Fig.~1}. In the lower part of each panel, what is one \emph{row}, and what is one \emph{dot}? What does the histogram above each raster show? \mk{2}
+\lines{3}
+
+\qn{A2.} Fill in the table for the three panels of Fig.~1. \mk{3}
+
+{\renewcommand{\arraystretch}{2.1}
+\begin{tabular}{@{}|p{2.4cm}|p{4.6cm}|p{5.2cm}|p{2.6cm}|@{}}
+\hline
+\textbf{Panel} & \textbf{Was the reward predicted? Did it come?} & \textbf{What the neuron does at the time of the reward} & \textbf{Prediction error (+, 0, --)}\\ \hline
+Top & & & \\ \hline
+Middle & & & \\ \hline
+Bottom & & & \\ \hline
+\end{tabular}}
+
+\qn{A3.} The legend says the dip in the bottom panel happens ``more than 1~s after the conditioned stimulus without any intervening stimuli''. Why is that detail important? What does it show about the brain? \mk{2}
+\lines{3}
+
+\qn{A4.} Before anyone recorded single dopamine neurons, three kinds of evidence linked dopamine to reward (page 1594). Name all three, in a few words each. \mk{3}
+
+1. \blank[15cm]\\[10pt]
+2. \blank[15cm]\\[10pt]
+3. \blank[15cm]
+
+% ============================ PAGE 4 =================================
+\newpage
+\sectionhead{Section B: Replicating the paper}{15}{35}
+Open Prediction Lab (page 1) and follow each part's steps. \textbf{Your numbers will differ a little from your neighbour's}: real recordings vary too.
+
+\medskip
+{\color{kprimary}\large\bfseries B1. Be the monkey}\quad{\color{kgrey}Lab Part 1, about 4 minutes}
+
+{\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{}|p{10.4cm}|p{4.6cm}|@{}}
+\hline
+Time from star to press, trials 1--4 & \hfill ms\\ \hline
+Time from star to press, last 6 ordinary trials & \hfill ms\\ \hline
+Time from star to press, the 2 early-star trials & \hfill ms\\ \hline
+No-star trials: how many you pressed in, and when (after the light) & \quad of 3, at \hfill ms\\ \hline
+\end{tabular}}
+
+\qn{(a)} Compare your first two numbers. What had you learned? \mk{1}
+\lines{1}
+\qn{(b)} Were you slower or faster when the star came 0.5~s early? Why? \mk{1}
+\lines{1}
+\qn{(c)} On the no-star trials, what did you do, and when? Which panel of Fig.~1 is this like, and why? \mk{1}
+\lines{1}
+
+\medskip
+{\color{kprimary}\large\bfseries B2. Record a dopamine neuron}\quad{\color{kgrey}Lab Part 2, about 8 minutes}
+
+{\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{}|p{6.4cm}|p{2.8cm}|p{2.8cm}|p{2.8cm}|@{}}
+\hline
+\textbf{Recording} (spikes per second) & \textbf{Resting} & \textbf{After the light} & \textbf{Juice time}\\ \hline
+Untrained: light then juice & & & \\ \hline
+Trained: light then juice & & & \\ \hline
+Trained: light, juice withheld & & & \\ \hline
+Trained: juice, no light & & & \\ \hline
+\end{tabular}}
+\mk{1}
+
+\qn{(a)} Which of your recordings matches each panel of Fig.~1? \mk{1}\\[6pt]
+Top: \blank[4cm] \quad Middle: \blank[4cm] \quad Bottom: \blank[4cm]
+
+\qn{(b)} After training, the neuron still bursts for juice that comes \emph{without} the light. Why, according to the theory? \mk{1}
+\lines{1}
+\qn{(c)} Did the replication work? Name one way your model recording differs from the real neuron in Fig.~1. \mk{1}
+\lines{1}
+
+% ============================ PAGE 5 =================================
+\newpage
+{\color{kprimary}\large\bfseries B3. Watch it learn}\quad{\color{kgrey}Lab Part 3, about 10 minutes}
+
+Use the slider to move through the 80 trials. The readout gives the prediction error at the light and at juice time.
+
+{\renewcommand{\arraystretch}{1.8}
+\begin{tabular}{@{}|p{4.6cm}|p{3.6cm}|p{3.6cm}|p{3.2cm}|@{}}
+\hline
+\textbf{Run} & \textbf{First trial with the juice response below 0.5} & \textbf{First trial with the biggest response at the light} & \textbf{Response at the light, trial 80}\\ \hline
+One light & & & \\ \hline
+One light + receptor blocker & & & \\ \hline
+Two lights & & & light 1: \newline light 2: \\ \hline
+\end{tabular}}
+\mk{1}
+
+\qn{(a)} The legend of Fig.~3 says ``the timing of reward delivery is learned well before any response transfers to the earliest sensory cue''. Do your numbers agree? Quote them. \mk{1}
+\lines{3}
+\qn{(b)} What happened on trial 50, and where do you see it in Fig.~3 of the paper? \mk{1}
+\lines{3}
+\qn{(c)} With two lights, which light ends up with the response? Which of the model's two ``testable predictions'' (page 1596) does this check? \mk{1}
+\lines{3}
+
+% ============================ PAGE 6 =================================
+\newpage
+{\color{kprimary}\large\bfseries B4. Test the theory}\quad{\color{kgrey}Lab Part 4, about 12 minutes}
+
+The neuron is fully trained: light at 0~s, juice at 1.0~s. \textbf{Predict first}: mark each cell \textbf{+} (burst), \textbf{0} (no change) or \textbf{--} (pause) \emph{before} you record. Then write the rate the lab shows.
+
+{\renewcommand{\arraystretch}{1.75}
+\begin{tabular}{@{}|p{5.6cm}|p{2.25cm}|p{2.25cm}|p{2.25cm}|p{2.25cm}|@{}}
+\hline
+\textbf{Test} \hfill {\footnotesize prediction / rate} & \textbf{at 0 s} & \textbf{at 0.5 s} & \textbf{at 1.0 s} & \textbf{at 1.5 s}\\ \hline
+A. As trained & \quad / & \quad / & \quad / & \quad / \\ \hline
+B. Juice withheld & \quad / & \quad / & \quad / & \quad / \\ \hline
+C. Juice 0.5 s late & \quad / & \quad / & \quad / & \quad / \\ \hline
+D. Juice 0.5 s early & \quad / & \quad / & \quad / & \quad / \\ \hline
+E. Double the juice & \quad / & \quad / & \quad / & \quad / \\ \hline
+F. Half the juice & \quad / & \quad / & \quad / & \quad / \\ \hline
+G. Light 2 left out & \quad / & \quad / & \quad / & \quad / \\ \hline
+\end{tabular}}
+\mk{2}
+
+\qn{B4 (a)} In Test F the monkey still gets juice, yet the neuron pauses. Explain this using ``prediction error''. \mk{1}
+\lines{4}
+\qn{B4 (b)} Test G checks the model's second testable prediction (page 1596). What did the neuron do at 0.5~s and at 1.0~s? Explain both. \mk{1}
+\lines{4}
+
+\medskip
+\begin{infobox}[title={Before you move on: check Section B}]
+\cb B1 table and (a)--(c) \quad \cb B2 table and (a)--(c) \quad \cb B3 table and (a)--(c) \quad \cb B4 table and (a)--(b)\\[3pt]
+Keep the lab open: Sections C and D may send you back to it.
+\end{infobox}
+
+% ============================ PAGE 7 =================================
+\newpage
+\sectionhead{Section C: Connecting to Sessions 7--12}{10}{25}
+
+\qn{C1. Spikes (Session 9).} Every spike is all-or-none. So how can one neuron say both ``better than expected'' and ``worse than expected''? Real dopamine neurons rest at only about 0.5--7 spikes per second. Why does that make ``worse than expected'' harder to signal? \mk{2}
+\lines{4}
+
+\qn{C2. Synapses (Sessions 11--12).} Suggest a synaptic input that could cause the \emph{burst}, and one that could cause the \emph{pause}. For each, name a likely transmitter and what happens at the membrane (which ions, EPSP or IPSP). \mk{2}
+\lines{4}
+
+\qn{C3. Conduction (Session 10).} Dopamine axons are thin and unmyelinated; in rats they conduct at about 0.5~m/s. Suppose the burst must travel 4~cm to the frontal cortex. How long does that take? How long would a 10~\textmu m myelinated axon take (about 6~m/s per \textmu m)? Show your working. \mk{2}
+\lines{4}
+
+\newpage
+\qn{C4. Receptors (Session 12).} All dopamine receptors (D1--D5) are G-protein-coupled (Bear, Table~6.2). From Relay Lab Part~3, what does this suggest about how fast, and for how long, dopamine affects its target neurons? The paper ends by saying such systems ``may also deliver precisely timed information''. Is there a tension? \mk{2}
+\lines{5}
+
+\qn{C5. Drugs (Session 12).} Cocaine and amphetamine block the reuptake of dopamine. (a) What happens to dopamine in the gap after a burst? (b) Using the theory, suggest why a drug that does this could make an experience seem ``better than expected'' every time, so it is never fully predicted. \mk{2}
+\lines{5}
+
+% ============================ PAGE 8 =================================
+\newpage
+\sectionhead{Section D: Thinking}{5}{10}
+Choose \textbf{one}. Write about 150 words. You will be marked on a clear claim, evidence from the paper or your lab, and one honest limitation. \hfill \textbf{My choice:} \cb D1 \quad \cb D2 \quad \cb D3
+
+\begin{studycard}[title={D1. A replication that fails}]
+Look at your Test D (juice 0.5~s early). Now read note 18 of the paper (page 1598). Where does the model disagree with the real neurons? Does this mean the theory is wrong, or something narrower? What would you change in the model?
+\end{studycard}
+
+\begin{studycard}[title={D2. ``Dopamine is the brain's pleasure chemical''}]
+Use the paper and your lab results to evaluate this popular claim. Which findings fit it, and which do not?
+\end{studycard}
+
+\begin{studycard}[title={D3. Who is surprised?}]
+The paper says dopamine neurons ``code for'' an error and are ``feature detectors of the goodness'' of events. Is the neuron surprised? Recall the homunculus from Session 9: who, or what, reads this error signal, according to the paper?
+\end{studycard}
+
+\lines{11}
+
+\begin{center}\color{kgrey}\small End of Quiz 2. Check that your name is on page 1.\end{center}
+
+% ============================ PAGE 10 ================================
+\newpage
+\pagehead{Rough work}
+{\color{kgrey}This page is not marked.}
+\end{document}

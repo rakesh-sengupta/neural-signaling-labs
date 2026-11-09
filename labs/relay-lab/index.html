@@ -1,0 +1,783 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Relay Lab</title>
+<meta name="description" content="How signals travel along axons, cross synapses and act on receptors: three short browser activities. Nothing is saved or sent.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: a lab bench. Plot on the left, controls and findings on the right; stacks on phones. */
+:root {
+  --bg: #F3F1EC; --panel: #FFFFFF; --ink: #1C2433; --muted: #5B6475; --rule: #D8D4CB;
+  --accent: #1F3A5F; --ok: #23665A; --warn: #A12F24; --stage: #FBFAF7; --grid: #E6E2D9;
+  --na: #B85A0E; --k: #6A3D9A; --trace: #1F3A5F; --ghost: #9AA6B8; --stim: #23665A;
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", Arial, sans-serif;
+  --font-num: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12161E; --panel: #1A202B; --ink: #E8EAF0; --muted: #A3ABBA; --rule: #2E3646;
+    --accent: #9DB7DD; --ok: #6FC3AE; --warn: #F08A7E; --stage: #161B24; --grid: #273041;
+    --na: #F2994A; --k: #B79CE8; --trace: #E8EAF0; --ghost: #5D6A80; --stim: #6FC3AE;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12161E; --panel: #1A202B; --ink: #E8EAF0; --muted: #A3ABBA; --rule: #2E3646;
+  --accent: #9DB7DD; --ok: #6FC3AE; --warn: #F08A7E; --stage: #161B24; --grid: #273041;
+  --na: #F2994A; --k: #B79CE8; --trace: #E8EAF0; --ghost: #5D6A80; --stim: #6FC3AE;
+  color-scheme: dark;
+}
+html, body { min-height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 17px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 10px;
+}
+*, *::before, *::after { box-sizing: border-box; }
+.app { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
+.topbar { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; border-bottom: 2px solid var(--rule); padding-block: 4px 8px; }
+.topbar h1 { font-size: 1.05rem; margin: 0; color: var(--accent); letter-spacing: 0.02em; }
+.topbar .note { font-size: 0.85rem; color: var(--muted); }
+#jspsych-target { min-height: 70vh; display: flex; flex-direction: column; }
+
+/* jsPsych essentials (inlined) */
+.jspsych-display-element { display: flex; flex-direction: column; font-family: var(--font-body); font-size: 17px; line-height: 1.5; }
+.jspsych-display-element:focus { outline: none; }
+.jspsych-content-wrapper { display: flex; align-items: flex-start; margin: 0 auto; flex: 1 1 100%; width: 100%; }
+.jspsych-content { max-width: 100%; width: 100%; text-align: left; margin: 0 auto !important; }
+.jspsych-btn, .btn {
+  display: inline-block; font: 700 1rem var(--font-body); cursor: pointer;
+  padding: 12px 24px; border-radius: 10px; border: 2px solid var(--accent);
+  background: var(--accent); color: var(--bg); touch-action: manipulation;
+}
+.btn2 { font: 700 0.95rem var(--font-body); padding: 9px 16px; border-radius: 10px; border: 2px solid var(--accent); background: transparent; color: var(--accent); cursor: pointer; }
+.jspsych-btn:focus-visible, .btn:focus-visible, .btn2:focus-visible, input:focus-visible, button:focus-visible { outline: 3px solid var(--na); outline-offset: 2px; }
+.jspsych-html-button-response-btngroup { display: flex; justify-content: center; margin-top: 16px; }
+
+/* reading column */
+.read { max-width: 42rem; margin: 8px auto; display: flex; flex-direction: column; gap: 12px; }
+.read h2 { font-size: 1.6rem; line-height: 1.2; margin: 0; text-wrap: balance; }
+.read p { margin: 0; }
+.eyebrow { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.calm { background: var(--panel); border-left: 4px solid var(--ok); padding: 10px 14px; border-radius: 6px; }
+.partlist { margin: 0; padding-left: 1.3rem; display: flex; flex-direction: column; gap: 4px; }
+
+/* lab bench */
+.bench-head { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+.bench-head h2 { margin: 0; font-size: 1.45rem; line-height: 1.2; }
+.glance { background: var(--panel); border-left: 4px solid var(--na); padding: 8px 12px; border-radius: 6px; font-weight: 700; color: var(--accent); }
+.bench { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+@media (max-width: 860px) { .bench { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 12px 14px; min-width: 0; }
+.card h3 { margin: 0 0 8px; font-size: 0.95rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.plotwrap { position: relative; width: 100%; }
+canvas { display: block; width: 100%; background: var(--stage); border-radius: 8px; }
+.readout { margin-top: 8px; font-size: 1.05rem; font-weight: 700; min-height: 1.6em; }
+.readout .num { font-family: var(--font-num); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.85rem; color: var(--muted); margin-top: 6px; }
+.sw { display: inline-block; width: 18px; height: 4px; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
+.ctrl { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.ctrl label { font-weight: 700; display: flex; justify-content: space-between; gap: 8px; }
+.ctrl .val { font-family: var(--font-num); font-weight: 600; color: var(--accent); }
+input[type=range] { width: 100%; accent-color: var(--accent); min-height: 32px; }
+.toggle { display: flex; align-items: center; gap: 10px; padding: 6px 0; font-weight: 700; }
+.toggle input { width: 22px; height: 22px; accent-color: var(--warn); }
+.toggle small { font-weight: 400; color: var(--muted); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.steps { margin: 0; padding-left: 1.3rem; display: flex; flex-direction: column; gap: 3px; }
+.field { display: flex; flex-direction: column; gap: 3px; margin-bottom: 10px; }
+.field label { font-size: 0.95rem; }
+.field .inrow { display: flex; gap: 8px; align-items: center; }
+.field input { font: 600 1rem var(--font-num); width: 6.5rem; padding: 6px 8px; border-radius: 8px; border: 2px solid var(--rule); background: var(--stage); color: var(--ink); }
+.fb { font-size: 0.9rem; }
+.fb.ok { color: var(--ok); } .fb.hint { color: var(--warn); }
+.q { margin-bottom: 12px; }
+.q p { margin: 0 0 6px; font-weight: 700; }
+.opts { display: flex; flex-direction: column; gap: 6px; }
+.opt { text-align: left; font: 400 0.95rem var(--font-body); padding: 8px 12px; border-radius: 8px; border: 2px solid var(--rule); background: var(--stage); color: var(--ink); cursor: pointer; }
+.opt.right { border-color: var(--ok); }
+.opt.wrong { border-color: var(--warn); }
+.done { background: var(--panel); border: 1px dashed var(--ok); border-radius: 10px; padding: 8px 12px; font-size: 0.95rem; }
+.navrow { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.tiny { font-size: 0.82rem; color: var(--muted); }
+.copyline { font-family: var(--font-num); font-size: 0.98rem; background: var(--panel); border: 1px dashed var(--accent); border-radius: 8px; padding: 10px 12px; user-select: all; overflow-wrap: anywhere; }
+table.sum { border-collapse: collapse; width: 100%; font-size: 0.95rem; }
+table.sum td { border-bottom: 1px solid var(--rule); padding: 6px 4px; vertical-align: top; }
+table.sum td.v { font-family: var(--font-num); text-align: right; white-space: nowrap; }
+.loadmsg { margin: auto; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+/* ---- Relay Lab additions ---- */
+.lanes { display: flex; flex-direction: column; gap: 6px; }
+table.lanetbl { border-collapse: collapse; width: 100%; font-size: 0.92rem; margin-top: 8px; }
+table.lanetbl th { text-align: left; font-weight: 700; color: var(--muted); font-size: 0.8rem; border-bottom: 1px solid var(--rule); padding: 4px; }
+table.lanetbl td { border-bottom: 1px solid var(--rule); padding: 5px 4px; }
+table.lanetbl td.v { font-family: var(--font-num); text-align: right; white-space: nowrap; }
+.sw2 { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 6px; }
+.order { display: flex; flex-direction: column; gap: 6px; }
+.order .slot { min-height: 38px; border: 2px dashed var(--rule); border-radius: 8px; padding: 7px 10px; font-size: 0.95rem; display: flex; gap: 8px; align-items: center; }
+.order .slot.filled { border-style: solid; border-color: var(--ok); background: var(--stage); }
+.order .slot b { font-family: var(--font-num); color: var(--muted); min-width: 1.3em; }
+.pool { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.pool .opt { flex: 1 1 14rem; }
+.pool .opt.shake { border-color: var(--warn); }
+.inputs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 10px; }
+.inputs label { display: flex; align-items: center; gap: 8px; font-weight: 700; padding: 6px 8px; border: 1px solid var(--rule); border-radius: 8px; background: var(--stage); }
+.inputs input { width: 22px; height: 22px; }
+.tagE { color: var(--ok); } .tagI { color: var(--warn); }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg label { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border: 1px solid var(--rule); border-radius: 8px; background: var(--stage); font-size: 0.95rem; }
+.seg input { width: 18px; height: 18px; accent-color: var(--accent); }
+.sub { margin: 10px 0 4px; font-weight: 700; font-size: 0.95rem; }
+.gate { max-width: 34rem; }
+.pwrow { display: flex; flex-direction: column; gap: 6px; }
+.pwrow label { font-weight: 700; }
+.pwrow .inrow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.pwrow input { font: 600 1.15rem var(--font-num); width: 12rem; max-width: 100%; padding: 8px 10px; border-radius: 8px; border: 2px solid var(--rule); background: var(--stage); color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <h1>Relay Lab</h1>
+    <span class="note">Introduction to Neuroscience · Sessions 10–12 · axons, synapses, receptors · nothing is saved or sent</span>
+  </header>
+  <div id="jspsych-target"><p class="loadmsg">Loading the lab…</p></div>
+</div>
+
+<script src="../../lib/jspsych-7.3.4.min.js"></script>
+<script src="../../lib/plugin-html-button-response-1.2.0.min.js"></script>
+<script>
+(function () {
+  "use strict";
+  var target = document.getElementById("jspsych-target");
+  if (typeof initJsPsych !== "function" || typeof jsPsychHtmlButtonResponse === "undefined") {
+    target.innerHTML = '<div class="read"><h2>The lab could not load</h2><p>Check your internet connection and reload this page.</p></div>';
+    return;
+  }
+  var PT = jsPsychModule.ParameterType;
+  var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------------- helpers ---------------- */
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  function setupCanvas(cv, h) {
+    var w = cv.parentElement.clientWidth, dpr = window.devicePixelRatio || 1;
+    cv.style.height = h + "px"; cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    var ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx: ctx, w: w, h: h };
+  }
+  function sig2(v) { if (v >= 100) return String(Math.round(v)); if (v >= 10) return v.toFixed(0); if (v >= 1) return v.toFixed(1); return v.toFixed(2); }
+  function axesFrame(ctx, L, T, W, H, yTicks, yFmt, yLabel, xTicks, xLabel, yMin, yMax, xMax) {
+    var y = function (v) { return T + (yMax - v) / (yMax - yMin) * H; };
+    var x = function (t) { return L + t / xMax * W; };
+    ctx.font = "12px " + css("--font-num"); ctx.fillStyle = css("--muted"); ctx.strokeStyle = css("--grid"); ctx.lineWidth = 1;
+    yTicks.forEach(function (v) { ctx.beginPath(); ctx.moveTo(L, y(v)); ctx.lineTo(L + W, y(v)); ctx.stroke(); ctx.textAlign = "right"; ctx.textBaseline = "middle"; ctx.fillText(yFmt(v), L - 6, y(v)); });
+    xTicks.forEach(function (t) { ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.fillText(String(t), x(t), T + H + 4); });
+    ctx.textAlign = "right"; ctx.textBaseline = "top"; ctx.fillText(xLabel, L + W, T + H + 18);
+    ctx.textAlign = "left"; ctx.textBaseline = "bottom"; ctx.fillText(yLabel, 4, T - 2);
+    return { x: x, y: y };
+  }
+
+  /* =======================================================================
+     PART 1 · Along the axon. Conduction speeds follow two rules of thumb
+     from measurements of real nerves (not a simulation):
+       myelinated (mammal): about 6 m/s per micrometre of diameter (Hursh, 1939)
+       bare (unmyelinated): about 1 m/s x square root of diameter in micrometres
+     Electrodes are 10 cm apart, as in a clinical nerve conduction test.
+     A "damaged myelin" patch (as in multiple sclerosis) covers 3 of the 10 cm
+     and conducts like a bare axon of the same diameter.
+     ======================================================================= */
+  var GAP_M = 0.10;
+  function speedOf(d, myel) { return myel ? 6 * d : Math.sqrt(d); }
+  function laneTime(l) {   // seconds
+    if (!l.myel || !l.ms) return GAP_M / speedOf(l.d, l.myel);
+    return 0.07 / speedOf(l.d, true) + 0.03 / speedOf(l.d, false);
+  }
+  function laneName(l) {
+    if (l.squid) return "Squid giant axon, 500 µm, bare";
+    return l.d + " µm, " + (l.myel ? (l.ms ? "myelinated, damaged patch" : "myelinated") : "bare");
+  }
+  var LANE_COLORS = ["--trace", "--na", "--k", "--ok"];
+  function drawRace(cv, lanes, prog) {
+    var laneH = 46, S = setupCanvas(cv, Math.max(1, lanes.length) * laneH + 30), ctx = S.ctx;
+    var L = 18, R = 18, W = S.w - L - R;
+    ctx.clearRect(0, 0, S.w, S.h);
+    ctx.font = "11px " + css("--font-body"); ctx.fillStyle = css("--muted"); ctx.textBaseline = "top";
+    ctx.textAlign = "left"; ctx.fillText("electrode 1", L, 2); ctx.textAlign = "right"; ctx.fillText("electrode 2 (10 cm along)", L + W, 2);
+    if (!lanes.length) { ctx.textAlign = "center"; ctx.fillText("Choose an axon and press Send a spike.", S.w / 2, 30); return; }
+    lanes.forEach(function (l, k) {
+      var yc = 30 + k * laneH + 14, col = css(LANE_COLORS[k % 4]);
+      // axon
+      ctx.strokeStyle = css("--ghost"); ctx.lineWidth = l.squid ? 9 : Math.max(2, Math.min(7, 1.5 + l.d * 0.3));
+      ctx.beginPath(); ctx.moveTo(L, yc); ctx.lineTo(L + W, yc); ctx.stroke();
+      if (l.myel) {   // myelin segments with node gaps (drawn 20 per lane, not to scale)
+        var n = 20, seg = W / n;
+        for (var i = 0; i < n; i++) {
+          var x0 = L + i * seg + 2, x1 = L + (i + 1) * seg - 2, mid = (x0 + x1) / 2;
+          var damaged = l.ms && (mid - L) / W >= 0.5 && (mid - L) / W < 0.8;
+          if (damaged) continue;
+          ctx.fillStyle = css("--panel"); ctx.strokeStyle = css("--accent"); ctx.lineWidth = 1.2;
+          ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x0, yc - 7, x1 - x0, 14, 6); else ctx.rect(x0, yc - 7, x1 - x0, 14); ctx.fill(); ctx.stroke();
+        }
+        if (l.ms) { ctx.fillStyle = css("--warn"); ctx.font = "10px " + css("--font-body"); ctx.textAlign = "center"; ctx.fillText("damaged myelin", L + 0.65 * W, yc + 9); }
+      }
+      // electrodes
+      ctx.fillStyle = css("--muted"); ctx.fillRect(L - 1, yc - 14, 2, 28); ctx.fillRect(L + W - 1, yc - 14, 2, 28);
+      // the spike
+      var p = prog[k] == null ? 0 : prog[k];
+      if (p > 0) {
+        var pos = p;
+        if (l.myel) {   // saltatory: the spike appears node to node
+          var n2 = 20, inPatch = l.ms && p >= 0.5 && p < 0.8;
+          if (!inPatch) pos = Math.round(p * n2) / n2;
+        }
+        var px = L + pos * W;
+        ctx.fillStyle = col; ctx.globalAlpha = 0.25; ctx.beginPath(); ctx.arc(px, yc, 12, 0, 6.283); ctx.fill(); ctx.globalAlpha = 1;
+        ctx.beginPath(); ctx.arc(px, yc, 6, 0, 6.283); ctx.fill();
+      }
+      ctx.fillStyle = col; ctx.font = "bold 11px " + css("--font-body"); ctx.textAlign = "left"; ctx.textBaseline = "bottom";
+      ctx.fillText((k + 1) + ". " + laneName(l), L + 4, yc - 12);
+    });
+  }
+
+  /* =======================================================================
+     PART 2 · Across the gap. A leaky integrate-and-fire neuron
+     (membrane time constant 15 ms, rest -65 mV, threshold -50 mV) with
+     conductance-based synapses: excitatory (A, B, C) and inhibitory (D).
+     This is a simpler model than Spike Lab's, chosen because its slower
+     membrane shows summation over the 1-15 ms window described by Bear et al.
+     ======================================================================= */
+  function simLIF(events, T) {
+    var tauM = 15, EL = -65, Vth = -50, Vreset = -70, tref = 2, dt = 0.02;
+    var wE = 0.9, wI = 2.5, tauE = 3, tauI = 6, EE = 0, EI = -72;
+    var V = EL, gE = 0, gI = 0, ref = 0, spikeDraw = 0, out = { t: [], V: [], spikes: [], ev: events };
+    var ev = events.slice().sort(function (a, b) { return a.t - b.t; }), k = 0;
+    for (var i = 0; i * dt <= T + 1e-9; i++) {
+      var t = i * dt;
+      while (k < ev.length && ev[k].t <= t + 1e-9) { if (ev[k].kind === "I") gI += wI; else gE += wE; k++; }
+      gE -= dt * gE / tauE; gI -= dt * gI / tauI;
+      var Vp;
+      if (ref > 0) { ref -= dt; V = Vreset; Vp = spikeDraw > 0 ? 40 : V; spikeDraw -= dt; }
+      else {
+        V += dt * (-(V - EL) - gE * (V - EE) - gI * (V - EI)) / tauM;
+        if (V >= Vth) { out.spikes.push(t); V = Vreset; ref = tref; spikeDraw = 0.6; Vp = 40; } else Vp = V;
+      }
+      if (i % 5 === 0) { out.t.push(t); out.V.push(Vp); }
+    }
+    return out;
+  }
+  function drawLIF(cv, runs, T, upto) {
+    var S = setupCanvas(cv, cv.parentElement.clientWidth < 520 ? 230 : 280), ctx = S.ctx;
+    var L = 46, R = 10, Tp = 14, B = 54, W = S.w - L - R, H = S.h - Tp - B;
+    ctx.clearRect(0, 0, S.w, S.h);
+    var tk = []; for (var q = 0; q <= T + 0.01; q += (T > 60 ? 20 : 10)) tk.push(q);
+    var ax = axesFrame(ctx, L, Tp, W, H, [-70, -65, -50, 0, 40], function (v) { return v > 0 ? "+" + v : String(v); }, "mV", tk, "time (ms)", -75, 45, T);
+    ctx.setLineDash([5, 4]); ctx.strokeStyle = css("--warn"); ctx.beginPath(); ctx.moveTo(L, ax.y(-50)); ctx.lineTo(L + W, ax.y(-50)); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = css("--warn"); ctx.textAlign = "left"; ctx.textBaseline = "bottom"; ctx.font = "11px " + css("--font-body"); ctx.fillText("threshold", L + 4, ax.y(-50) - 2);
+    runs.forEach(function (o, k) {
+      var last = k === runs.length - 1, n = last && upto != null ? Math.min(upto, o.t.length) : o.t.length;
+      ctx.strokeStyle = last ? css("--trace") : css("--ghost"); ctx.lineWidth = last ? 2.4 : 1.3; ctx.beginPath();
+      for (var i = 0; i < n; i++) { var px = ax.x(o.t[i]), py = ax.y(o.V[i]); if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py); }
+      ctx.stroke();
+    });
+    var cur = runs[runs.length - 1];
+    if (cur) {   // input markers under the plot
+      var my = Tp + H + 30;
+      cur.ev.forEach(function (e) {
+        ctx.fillStyle = e.kind === "I" ? css("--warn") : css("--ok");
+        ctx.font = "bold 11px " + css("--font-body"); ctx.textAlign = "center"; ctx.textBaseline = "top";
+        ctx.fillText("▲" + e.kind, ax.x(e.t), my);
+      });
+    }
+  }
+
+  /* =======================================================================
+     PART 3 · Keys and locks. Simplified kinetics (arbitrary units):
+     transmitter in the gap decays (clearance), binds receptors; an ion-channel
+     receptor responds at once, a G-protein receptor through a slow cascade.
+     Drugs: agonist (mimics the transmitter), antagonist (blocks 85% of
+     receptors), clearance blocker (reuptake or enzyme blocked: 8x slower).
+     Responses are scaled so that "no drug" peaks at 100.
+     ======================================================================= */
+  var SYN = {
+    nic: { label: "ACh at a muscle (nicotinic receptor: an ion channel)", tauC: 1.0, kon: 2.0, koff: 0.4, type: "ion", tauP: 4, T: 40, clear: "enzyme (AChE)" },
+    mus: { label: "ACh at the heart (muscarinic receptor: G-protein)", tauC: 2.0, kon: 0.6, koff: 0.04, type: "g", tauG: 40, tauP: 220, T: 1200, clear: "enzyme (AChE)" },
+    ser: { label: "Serotonin (a G-protein receptor)", tauC: 15, kon: 0.3, koff: 0.02, type: "g", tauG: 40, tauP: 220, T: 1200, clear: "reuptake" }
+  };
+  function simRecRaw(key, drug, norm) {
+    var s = SYN[key], dt = 0.05, T = s.T, tauC = s.tauC * (drug === "block" ? 8 : 1);
+    var B = drug === "antag" ? 0.85 : 0, Ag = drug === "agon" ? 0.7 * (norm || 0.1) : 0;
+    var Tr = 0, R = 0, G = Ag, P = Ag, out = { t: [], Tr: [], P: [] };
+    var every = Math.max(1, Math.round(T / 600 / dt));
+    for (var i = 0; i * dt <= T; i++) {
+      var t = i * dt;
+      if (Math.abs(t - 2) < dt / 2) Tr += 1;
+      var free = Math.max(0, 1 - R - B - Ag);
+      R += dt * (s.kon * Tr * free - s.koff * R);
+      Tr -= dt * (Tr / tauC);
+      var act = R + Ag;
+      if (s.type === "ion") P += dt * (act - P) / s.tauP; else { G += dt * (act - G) / s.tauG; P += dt * (G - P) / s.tauP; }
+      if (i % every === 0) { out.t.push(t); out.Tr.push(Tr); out.P.push(P); }
+    }
+    return out;
+  }
+  var NORM = {};
+  function simRec(key, drug) {
+    if (NORM[key] == null) { var z = simRecRaw(key, "none"); NORM[key] = Math.max.apply(null, z.P); }
+    var o = simRecRaw(key, drug, NORM[key]);
+    o.P = o.P.map(function (v) { return 100 * v / NORM[key]; });
+    o.key = key; o.drug = drug; return o;
+  }
+  function recStats(o) {
+    var pk = Math.max.apply(null, o.P), base = o.P[0], half = base + 0.5 * (pk - base), i0 = -1, i1 = -1;
+    for (var i = 0; i < o.P.length; i++) if (o.P[i] >= half) { if (i0 < 0) i0 = i; i1 = i; }
+    return { peak: pk, base: base, dur: (i0 >= 0 && i1 > i0) ? o.t[i1] - o.t[i0] : 0 };
+  }
+  function drawRec(cvT, cvP, runs, T, upto) {
+    var cur = runs[runs.length - 1];
+    var S = setupCanvas(cvT, 118), ctx = S.ctx, L = 46, R = 10, Tp = 24, W = S.w - L - R, H = S.h - Tp - 26;
+    ctx.clearRect(0, 0, S.w, S.h);
+    var tk = T > 100 ? [0, 300, 600, 900, 1200] : [0, 10, 20, 30, 40];
+    var ax = axesFrame(ctx, L, Tp, W, H, [0, 1], function (v) { return v ? "high" : "0"; }, "transmitter in the gap", tk, "", 0, 1.05, T);
+    if (cur) {
+      var n = upto != null ? Math.min(upto, cur.t.length) : cur.t.length;
+      ctx.strokeStyle = css("--na"); ctx.lineWidth = 2.2; ctx.beginPath();
+      for (var i = 0; i < n; i++) { var px = ax.x(cur.t[i]), py = ax.y(cur.Tr[i]); if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py); }
+      ctx.stroke();
+    }
+    var S2 = setupCanvas(cvP, cvP.parentElement.clientWidth < 520 ? 200 : 230), c2 = S2.ctx, H2 = S2.h - Tp - 40, W2 = S2.w - L - R;
+    c2.clearRect(0, 0, S2.w, S2.h);
+    var ax2 = axesFrame(c2, L, Tp, W2, H2, [0, 100, 200, 300], String, "response (no drug = 100)", tk, "time (ms)", 0, 320, T);
+    runs.forEach(function (o, k) {
+      var last = k === runs.length - 1, m = last && upto != null ? Math.min(upto, o.t.length) : o.t.length;
+      c2.strokeStyle = last ? css("--trace") : css("--ghost"); c2.lineWidth = last ? 2.4 : 1.3; c2.beginPath();
+      for (var i = 0; i < m; i++) { var px = ax2.x(o.t[i]), py = ax2.y(Math.min(320, o.P[i])); if (i === 0) c2.moveTo(px, py); else c2.lineTo(px, py); }
+      c2.stroke();
+    });
+  }
+
+  /* ---------------- what each part asks ---------------- */
+  var LAB = { fields: {}, order: false };
+  var PARTS = {
+    1: {
+      eyebrow: "Part 1 of 3 · slides: “The race”",
+      title: "Along the axon: the race",
+      glance: "Thicker axons are faster. Myelin is faster still, by far.",
+      steps: ["Choose an axon and press <b>Send a spike</b>. It races from electrode 1 to electrode 2, 10 cm away.",
+              "Race these four: <b>1 µm bare</b> (a pain fibre); <b>12 µm myelinated</b>; the <b>squid giant axon</b>; <b>12 µm myelinated with damaged myelin</b>.",
+              "Read each speed from the table and check it below."],
+      fields: [
+        { id: "c", label: "Speed of the 1 µm bare axon", unit: "m/s", target: 1.0, tol: 0.15 },
+        { id: "m12", label: "Speed of the 12 µm myelinated axon", unit: "m/s", target: 72, tol: 4 },
+        { id: "sq", label: "Speed of the squid giant axon", unit: "m/s", target: 22, tol: 2 },
+        { id: "ms", label: "Speed of the 12 µm axon with damaged myelin", unit: "m/s", target: 10, tol: 1.5 }
+      ],
+      questions: [
+        { id: "win", q: "Which won: the squid giant axon (500 µm, bare) or the 12 µm myelinated axon?", options: ["The squid giant axon", "The 12 µm myelinated axon", "A tie"], correct: 1,
+          explain: "Myelin beats size: a myelinated axon about 40 times thinner was about three times faster. That is how a brain fits billions of fast axons in a skull." },
+        { id: "ms", q: "Why might someone with multiple sclerosis (MS) see or move more slowly?", options: ["Their spikes are smaller", "Damaged myelin slows (or blocks) conduction", "Their synapses run out of transmitter"], correct: 1,
+          explain: "MS attacks myelin. Doctors can detect it by timing how long a checkerboard pattern takes to evoke a response over the visual cortex (Bear et al., Box 4.5)." }
+      ],
+      done: "Four lanes raced, four speeds checked (booklet page 4)."
+    },
+    2: {
+      eyebrow: "Part 2 of 3 · slides: “Adding up”",
+      title: "Across the gap: the neuron decides",
+      glance: "One input is rarely enough. A neuron adds up its inputs and fires only past threshold.",
+      steps: ["First put the six steps of a chemical synapse in order (below).",
+              "Then fire inputs into the receiving neuron. <b>A, B, C</b> are excitatory; <b>D</b> is inhibitory.",
+              "Find how many excitatory inputs must arrive together, and the longest gap at which one input repeated three times still fires the neuron."],
+      fields: [
+        { id: "a", label: "Rise from input A alone (above −65 mV)", unit: "mV", target: 7, tol: 1.0 },
+        { id: "n", label: "Excitatory inputs needed together to fire", unit: "", target: 3, tol: 0.01 },
+        { id: "gap", label: "Longest gap that still fires (A three times)", unit: "ms", target: 7, tol: 0.01, hintLow: "That gap fires. Try a longer one.", hintHigh: "At that gap it does not fire. Try a shorter one." }
+      ],
+      questions: [
+        { id: "d", q: "Add D (inhibitory) to A + B + C. What happens?", options: ["The spike gets bigger", "No spike: inhibition holds the neuron below threshold", "Nothing changes"], correct: 1,
+          explain: "Inhibitory synapses (often GABA or glycine) open chloride channels, which pull the voltage towards rest and “shunt” excitation away." },
+        { id: "why", q: "Why don’t single synapses in the brain fire a neuron by themselves, as the neuromuscular junction does?", options: ["Brain synapses are broken", "So the neuron can weigh many inputs and decide", "There is no transmitter in the brain"], correct: 1,
+          explain: "A muscle synapse must work every time. A brain neuron is a decision-maker, not a relay: it adds up many small inputs (Bear et al., Ch. 5)." }
+      ],
+      done: "The six steps are in order, three numbers checked, two questions answered (booklet page 5).",
+      note: "This part uses a simpler model neuron than Spike Lab (a “leaky integrate-and-fire” neuron), with a 15 ms membrane time. Real brain EPSPs are usually much smaller (often under 1 mV), so a real neuron needs many more inputs than three."
+    },
+    3: {
+      eyebrow: "Part 3 of 3 · slides: “Keys and locks”",
+      title: "Receptors and drugs",
+      glance: "The receptor decides the response. Drugs work by copying, blocking or prolonging the transmitter.",
+      steps: ["Choose a synapse and press <b>Release transmitter</b> with no drug. Note how fast the response is.",
+              "Try each drug in turn. Watch both panels: transmitter in the gap (top) and the response (bottom).",
+              "Compare the ion-channel receptor with a G-protein receptor."],
+      fields: [],
+      questions: [
+        { id: "speed", q: "ACh at a muscle (ion channel) versus ACh at the heart (G-protein receptor). Which response is faster?", options: ["The ion-channel receptor, by about 20 times", "The G-protein receptor", "They are the same: same transmitter"], correct: 0,
+          explain: "Same transmitter, different receptor, different response. This is called divergence." },
+        { id: "curare", q: "Curare (an arrow-tip poison) paralyses muscles by blocking ACh receptors. In this lab it is…", options: ["an agonist", "an antagonist", "a clearance blocker"], correct: 1,
+          explain: "An antagonist sits in the receptor without opening it, so the transmitter cannot act." },
+        { id: "nic", q: "Nicotine switches on the same muscle ACh receptors. In this lab it is…", options: ["an agonist", "an antagonist", "a clearance blocker"], correct: 0,
+          explain: "An agonist copies the transmitter. That is why these receptors are called nicotinic." },
+        { id: "prozac", q: "Fluoxetine (Prozac) blocks the reuptake of serotonin. What happens to the response?", options: ["Smaller and shorter", "Bigger and longer", "Unchanged"], correct: 1,
+          explain: "Transmitter stays in the gap longer, so the receptors keep being activated." },
+        { id: "caffeine", q: "Caffeine blocks receptors for adenosine, a chemical that builds up and makes you drowsy. Caffeine is…", options: ["an adenosine agonist", "an adenosine antagonist"], correct: 1,
+          explain: "Caffeine keeps adenosine from acting, so you feel less sleepy (Bear et al., Table 6.1)." }
+      ],
+      done: "You tried all three drugs on at least two synapses, and the booklet table (page 6) is filled in.",
+      note: "This part is a simplified model for comparing drugs, in arbitrary units. Real synapses differ in detail; the directions of the effects are what matter."
+    },
+    free: { eyebrow: "Free lab", title: "Try anything", glance: "Go back to any part. Make a prediction first, then test it.", steps: [], fields: [], questions: [], done: "" }
+  };
+
+  /* ---------------- shared findings UI ---------------- */
+  function findingsHTML(P) {
+    if (!P.fields.length && !P.questions.length) return "";
+    var h = '<div class="card"><h3>Your findings</h3>';
+    P.fields.forEach(function (f) {
+      h += '<div class="field"><label for="f_' + f.id + '">' + f.label + '</label><div class="inrow"><input id="f_' + f.id + '" inputmode="decimal" autocomplete="off"> <span>' + f.unit + '</span><button class="btn2" data-check="' + f.id + '">Check</button></div><div class="fb" id="fb_' + f.id + '" aria-live="polite"></div></div>';
+    });
+    P.questions.forEach(function (q) {
+      h += '<div class="q" data-q="' + q.id + '"><p>' + q.q + '</p><div class="opts">' + q.options.map(function (o, i) { return '<button class="opt" data-i="' + i + '">' + o + '</button>'; }).join("") + '</div><div class="fb" aria-live="polite"></div></div>';
+    });
+    return h + '</div>';
+  }
+  function wireFindings(el, P, part) {
+    el.querySelectorAll("[data-check]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var f = P.fields.filter(function (x) { return x.id === b.getAttribute("data-check"); })[0];
+        var raw = el.querySelector("#f_" + f.id).value.replace(",", ".").replace("−", "-").replace(/[^0-9.\-+]/g, "");
+        var v = parseFloat(raw), fb = el.querySelector("#fb_" + f.id);
+        if (isNaN(v)) { fb.className = "fb hint"; fb.textContent = "Type a number first."; return; }
+        LAB.fields[part + "." + f.id] = v;
+        if (Math.abs(v - f.target) <= f.tol + 1e-9) { fb.className = "fb ok"; fb.textContent = "✓ That matches the model."; }
+        else { fb.className = "fb hint"; fb.textContent = v < f.target ? (f.hintLow || "A little low. Check the readout and try again.") : (f.hintHigh || "A little high. Check the readout and try again."); }
+      });
+    });
+    el.querySelectorAll("[data-q]").forEach(function (box) {
+      var q = P.questions.filter(function (x) { return x.id === box.getAttribute("data-q"); })[0];
+      box.querySelectorAll(".opt").forEach(function (b) {
+        b.addEventListener("click", function () {
+          var i = +b.getAttribute("data-i"), fb = box.querySelector(".fb");
+          box.querySelectorAll(".opt").forEach(function (x) { x.classList.remove("right", "wrong"); });
+          if (i === q.correct) { b.classList.add("right"); fb.className = "fb ok"; fb.innerHTML = "✓ Yes. " + q.explain; }
+          else { b.classList.add("wrong"); fb.className = "fb hint"; fb.textContent = "Not quite. Try the lab again, then choose another answer."; }
+        });
+      });
+    });
+  }
+  function headHTML(P) {
+    return '<div class="bench-head"><span class="eyebrow">' + P.eyebrow + '</span><h2>' + P.title + '</h2><div class="glance">' + P.glance + '</div></div>';
+  }
+  function stepsHTML(P) { return P.steps.length ? '<div class="card"><h3>Steps</h3><ol class="steps">' + P.steps.map(function (s) { return "<li>" + s + "</li>"; }).join("") + '</ol></div>' : ""; }
+  function navHTML(part) {
+    var label = part === "3" ? "See my results →" : (part === "free" ? "Back to results" : "Next part →");
+    return '<div class="navrow"><span class="tiny">Nothing you do here is saved or sent.</span><button class="btn" id="next">' + label + '</button></div>';
+  }
+  function animate(n, dur, frame, done) {
+    if (reduceMotion) { frame(n); done(); return; }
+    var start = performance.now();
+    (function f(now) { var k = Math.min(n, Math.ceil((now - start) / dur * n)); frame(k); if (k < n) requestAnimationFrame(f); else done(); })(start);
+  }
+
+  /* ---------------- the lab plugin ---------------- */
+  function RelayLab(jsPsych) { this.jsPsych = jsPsych; }
+  RelayLab.info = { name: "relay-lab", parameters: { part: { type: PT.STRING, default: "1" } } };
+  RelayLab.prototype.trial = function (el, trial) {
+    var self = this, part = trial.part, P = PARTS[part];
+    try { window.scrollTo(0, 0); } catch (e) {}
+    var cleanup = [];
+    function finish() { cleanup.forEach(function (f) { f(); }); self.jsPsych.finishTrial({ part: part }); }
+
+    if (part === "1" || part === "free1") { buildRace(); }
+    else if (part === "2") { buildSynapse(); }
+    else if (part === "3") { buildReceptor(); }
+    else { buildFree(); }
+
+    /* ---------- Part 1 ---------- */
+    function buildRace() {
+      var st = { d: 12, myel: true, ms: false, lanes: [], prog: [] };
+      el.innerHTML = headHTML(P) + '<div class="bench"><div class="card"><h3>The race (10 cm of nerve)</h3><div class="plotwrap"><canvas id="cv" role="img" aria-label="Race between axons"></canvas></div>' +
+        '<div class="readout" id="readout" aria-live="polite"></div>' +
+        '<table class="lanetbl" id="tbl"><thead><tr><th>Axon</th><th style="text-align:right">Time for 10 cm</th><th style="text-align:right">Speed</th></tr></thead><tbody></tbody></table>' +
+        '<p class="tiny" style="margin:8px 0 0">Speeds come from rules of thumb fitted to real nerves (about 6 m/s per µm for myelinated axons; about √diameter m/s for bare ones). The drawing is not to scale: real nodes are about 1 mm apart.</p></div>' +
+        '<div style="display:flex;flex-direction:column;gap:12px;min-width:0">' + stepsHTML(P) +
+        '<div class="card"><h3>Controls</h3><div class="ctrl"><label for="d">Axon diameter <span class="val" id="dv"></span></label><input id="d" type="range" min="1" max="20" step="1" value="12"></div>' +
+        '<label class="toggle" style="color:var(--ink)"><input type="checkbox" id="my" checked style="accent-color:var(--accent)"> Myelin</label>' +
+        '<label class="toggle"><input type="checkbox" id="ms"> Damaged myelin patch <small>(as in MS)</small></label>' +
+        '<div class="row" style="margin-top:6px"><button class="btn" id="go">Send a spike</button><button class="btn2" id="sq">Squid giant axon</button><button class="btn2" id="clr">Clear</button></div></div>' +
+        findingsHTML(P) + '<div class="done"><b>You are done when:</b> ' + P.done + '</div></div></div>' + navHTML(part);
+      var cv = el.querySelector("#cv"), dIn = el.querySelector("#d"), my = el.querySelector("#my"), ms = el.querySelector("#ms"), readout = el.querySelector("#readout");
+      function sync() { el.querySelector("#dv").textContent = st.d + " µm"; ms.disabled = !st.myel; if (!st.myel) { ms.checked = false; st.ms = false; } ms.parentElement.style.opacity = st.myel ? 1 : 0.45; }
+      function table() {
+        el.querySelector("#tbl tbody").innerHTML = st.lanes.map(function (l, k) {
+          var t = laneTime(l); return '<tr><td><span class="sw2" style="background:var(' + LANE_COLORS[k % 4] + ')"></span>' + laneName(l) + '</td><td class="v">' + sig2(t * 1000) + ' ms</td><td class="v">' + sig2(GAP_M / t) + ' m/s</td></tr>';
+        }).join("");
+      }
+      function redraw() { drawRace(cv, st.lanes, st.prog); }
+      function race(newLane) {
+        st.lanes.push(newLane); if (st.lanes.length > 4) st.lanes.shift();
+        var times = st.lanes.map(laneTime), tmax = Math.max.apply(null, times), slow = 3000 / (tmax * 1000);   // slowest lane takes 3 s on screen
+        st.prog = st.lanes.map(function () { return 0; });
+        readout.innerHTML = "Racing… (slowed down about " + sig2(slow) + " times)";
+        var start = performance.now();
+        function frame(now) {
+          var el_ms = now - start, doneAll = true;
+          st.prog = times.map(function (t) { var p = el_ms / (t * 1000 * slow); if (p < 1) doneAll = false; return Math.min(1, p); });
+          redraw(); if (!doneAll) requestAnimationFrame(frame); else { table(); readout.innerHTML = "Finished. The time for 10 cm and the speed are in the table."; }
+        }
+        if (reduceMotion) { st.prog = times.map(function () { return 1; }); redraw(); table(); readout.textContent = "Finished. The time and speed are in the table."; }
+        else requestAnimationFrame(frame);
+      }
+      dIn.addEventListener("input", function () { st.d = +dIn.value; sync(); });
+      my.addEventListener("change", function () { st.myel = my.checked; sync(); });
+      ms.addEventListener("change", function () { st.ms = ms.checked; });
+      el.querySelector("#go").addEventListener("click", function () { race({ d: st.d, myel: st.myel, ms: st.ms }); });
+      el.querySelector("#sq").addEventListener("click", function () { race({ d: 500, myel: false, ms: false, squid: true }); });
+      el.querySelector("#clr").addEventListener("click", function () { st.lanes = []; st.prog = []; table(); redraw(); readout.textContent = ""; });
+      sync(); redraw();
+      var onR = function () { redraw(); }; window.addEventListener("resize", onR); cleanup.push(function () { window.removeEventListener("resize", onR); });
+      wireFindings(el, P, part);
+      el.querySelector("#next").addEventListener("click", finish);
+    }
+
+    /* ---------- Part 2 ---------- */
+    function buildSynapse() {
+      var STEPS = ["A spike arrives at the axon terminal", "Calcium (Ca²⁺) doors open; Ca²⁺ rushes in", "Vesicles fuse and release transmitter into the gap",
+                   "Transmitter crosses the gap and binds to receptors", "Receptor channels open: the receiving neuron’s voltage changes (EPSP or IPSP)", "Transmitter is cleared away (reuptake or an enzyme)"];
+      var order = [0, 1, 2, 3, 4, 5], shuffled = order.slice().sort(function () { return Math.random() - 0.5; });
+      if (shuffled.join() === order.join()) shuffled.reverse();
+      var placed = 0, st = { runs: [], gap: 5 };
+      el.innerHTML = headHTML(P) + '<div class="bench"><div style="display:flex;flex-direction:column;gap:12px;min-width:0">' +
+        '<div class="card"><h3>Step 1 · the six steps, in order</h3><p class="tiny" style="margin:0 0 6px">Tap the step that comes next.</p><div class="order" id="slots">' +
+        order.map(function (i) { return '<div class="slot" data-slot="' + i + '"><b>' + (i + 1) + '</b><span></span></div>'; }).join("") +
+        '</div><div class="pool" id="pool">' + shuffled.map(function (i) { return '<button class="opt" data-step="' + i + '">' + STEPS[i] + '</button>'; }).join("") + '</div><div class="fb" id="orderfb" aria-live="polite"></div></div>' +
+        '<div class="card"><h3>Step 2 · voltage of the receiving neuron</h3><div class="plotwrap"><canvas id="cv" role="img" aria-label="Voltage of the receiving neuron"></canvas></div>' +
+        '<div class="readout" id="readout" aria-live="polite">Fire some inputs to begin.</div>' +
+        '<div class="legend"><span><span class="sw" style="background:var(--trace)"></span>this try</span><span><span class="sw" style="background:var(--ghost)"></span>your last tries</span><span class="tagE">▲ excitatory input</span><span class="tagI">▲ inhibitory input</span></div>' +
+        (P.note ? '<p class="tiny" style="margin:8px 0 0">' + P.note + '</p>' : "") + '</div></div>' +
+        '<div style="display:flex;flex-direction:column;gap:12px;min-width:0">' + stepsHTML(P) +
+        '<div class="card"><h3>Controls</h3><div class="sub">Fire together</div><div class="inputs">' +
+        ['A', 'B', 'C'].map(function (k) { return '<label class="tagE"><input type="checkbox" data-in="' + k + '"' + (k === "A" ? " checked" : "") + '> ' + k + ' (excitatory)</label>'; }).join("") +
+        '<label class="tagI"><input type="checkbox" data-in="D"> D (inhibitory)</label></div>' +
+        '<div class="row" style="margin-top:8px"><button class="btn" id="fire">Fire together</button></div>' +
+        '<div class="sub">Or: input A three times in a row</div><div class="ctrl"><label for="g">Gap between them <span class="val" id="gv"></span></label><input id="g" type="range" min="2" max="20" step="1" value="5"></div>' +
+        '<div class="row"><button class="btn2" id="rep">Fire A × 3</button><button class="btn2" id="clr">Clear old traces</button></div></div>' +
+        findingsHTML(P) + '<div class="done"><b>You are done when:</b> ' + P.done + '</div></div></div>' + navHTML(part);
+      // ordering
+      el.querySelectorAll("[data-step]").forEach(function (b) {
+        b.addEventListener("click", function () {
+          var i = +b.getAttribute("data-step"), fb = el.querySelector("#orderfb");
+          if (i === placed) {
+            var slot = el.querySelector('[data-slot="' + placed + '"]'); slot.classList.add("filled"); slot.querySelector("span").textContent = STEPS[i];
+            b.remove(); placed++;
+            fb.className = "fb ok"; fb.textContent = placed === 6 ? "✓ All six in order. This happens in about a millisecond." : "✓ Yes.";
+            if (placed === 6) LAB.order = true;
+          } else {
+            b.classList.add("shake"); setTimeout(function () { b.classList.remove("shake"); }, 600);
+            fb.className = "fb hint"; fb.textContent = "Not yet. What has to happen just before that?";
+          }
+        });
+      });
+      var cv = el.querySelector("#cv"), readout = el.querySelector("#readout"), gIn = el.querySelector("#g");
+      function T() { var cur = st.runs[st.runs.length - 1]; return cur && cur.T ? cur.T : 60; }
+      function redraw(upto) { drawLIF(cv, st.runs, T(), upto); }
+      function describe(o, what) {
+        var pk = -1e9; for (var i = 0; i < o.V.length; i++) if (o.V[i] < 0 && o.V[i] > pk) pk = o.V[i];
+        var rise = Math.max(0, pk + 65);
+        if (o.spikes.length) return what + ": <b>a spike!</b> The inputs added up past threshold.";
+        return what + ": no spike. Highest rise: <span class=num>" + rise.toFixed(1) + " mV</span> above rest (threshold is 15 mV above rest).";
+      }
+      function run(events, Tmax, what) {
+        var o = simLIF(events, Tmax); o.T = Tmax;
+        st.runs.push(o); if (st.runs.length > 4) st.runs.shift();
+        readout.innerHTML = "";
+        animate(o.t.length, 600, function (k) { redraw(k); }, function () { redraw(); readout.innerHTML = describe(o, what); });
+      }
+      el.querySelector("#fire").addEventListener("click", function () {
+        var ev = [], names = [];
+        el.querySelectorAll("[data-in]").forEach(function (c) { if (c.checked) { var k = c.getAttribute("data-in"); names.push(k); ev.push({ t: 5, kind: k === "D" ? "I" : "E" }); } });
+        if (!ev.length) { readout.textContent = "Tick at least one input first."; return; }
+        st.runs = st.runs.filter(function (r) { return r.T === 60; });
+        run(ev, 60, names.join(" + "));
+      });
+      gIn.addEventListener("input", function () { st.gap = +gIn.value; el.querySelector("#gv").textContent = st.gap + " ms"; });
+      el.querySelector("#gv").textContent = st.gap + " ms";
+      el.querySelector("#rep").addEventListener("click", function () {
+        var g = st.gap; st.runs = st.runs.filter(function (r) { return r.T === 80; });
+        run([{ t: 5, kind: "E" }, { t: 5 + g, kind: "E" }, { t: 5 + 2 * g, kind: "E" }], 80, "A three times, " + g + " ms apart");
+      });
+      el.querySelector("#clr").addEventListener("click", function () { st.runs = st.runs.slice(-1); redraw(); });
+      redraw();
+      var onR = function () { redraw(); }; window.addEventListener("resize", onR); cleanup.push(function () { window.removeEventListener("resize", onR); });
+      wireFindings(el, P, part);
+      el.querySelector("#next").addEventListener("click", finish);
+    }
+
+    /* ---------- Part 3 ---------- */
+    function buildReceptor() {
+      var st = { key: "nic", drug: "none", runs: [] };
+      var DRUGS = [["none", "No drug"], ["agon", "Agonist (copies the transmitter)"], ["antag", "Antagonist (blocks the receptor)"], ["block", "Clearance blocker (blocks reuptake or the enzyme)"]];
+      el.innerHTML = headHTML(P) + '<div class="bench"><div class="card"><h3>At the synapse</h3>' +
+        '<div class="plotwrap"><canvas id="cvT" role="img" aria-label="Transmitter in the gap"></canvas></div>' +
+        '<div class="plotwrap" style="margin-top:8px"><canvas id="cvP" role="img" aria-label="Response of the receiving cell"></canvas></div>' +
+        '<div class="readout" id="readout" aria-live="polite">Choose a synapse and press Release transmitter.</div>' +
+        '<div class="legend"><span><span class="sw" style="background:var(--na)"></span>transmitter in the gap</span><span><span class="sw" style="background:var(--trace)"></span>response, this try</span><span><span class="sw" style="background:var(--ghost)"></span>your last tries (same synapse)</span></div>' +
+        '<p class="tiny" style="margin:8px 0 0">' + P.note + '</p></div>' +
+        '<div style="display:flex;flex-direction:column;gap:12px;min-width:0">' + stepsHTML(P) +
+        '<div class="card"><h3>Controls</h3><div class="sub">Synapse</div><div class="seg" role="radiogroup">' +
+        Object.keys(SYN).map(function (k) { return '<label><input type="radio" name="syn" value="' + k + '"' + (k === "nic" ? " checked" : "") + '> ' + SYN[k].label + '</label>'; }).join("") +
+        '</div><div class="sub">Drug</div><div class="seg" role="radiogroup">' +
+        DRUGS.map(function (d) { return '<label><input type="radio" name="drug" value="' + d[0] + '"' + (d[0] === "none" ? " checked" : "") + '> ' + d[1] + '</label>'; }).join("") +
+        '</div><div class="row" style="margin-top:10px"><button class="btn" id="go">Release transmitter</button><button class="btn2" id="clr">Clear old traces</button></div></div>' +
+        findingsHTML(P) + '<div class="done"><b>You are done when:</b> ' + P.done + '</div></div></div>' + navHTML(part);
+      var cvT = el.querySelector("#cvT"), cvP = el.querySelector("#cvP"), readout = el.querySelector("#readout");
+      function redraw(upto) { drawRec(cvT, cvP, st.runs, SYN[st.key].T, upto); }
+      el.querySelectorAll('input[name=syn]').forEach(function (r) { r.addEventListener("change", function () { st.key = r.value; st.runs = []; redraw(); readout.textContent = "Press Release transmitter."; }); });
+      el.querySelectorAll('input[name=drug]').forEach(function (r) { r.addEventListener("change", function () { st.drug = r.value; }); });
+      el.querySelector("#go").addEventListener("click", function () {
+        var o = simRec(st.key, st.drug); st.runs.push(o); if (st.runs.length > 4) st.runs.shift();
+        var s = recStats(o), drugName = DRUGS.filter(function (d) { return d[0] === st.drug; })[0][1].split(" (")[0];
+        readout.innerHTML = "";
+        animate(o.t.length, 900, function (k) { redraw(k); }, function () {
+          redraw();
+          var txt = drugName + ": response peaks at <span class=num>" + Math.round(s.peak) + "</span> (no drug = 100) and lasts about <span class=num>" + sig2(s.dur) + " ms</span> (time above half its peak).";
+          if (s.base > 5) txt += " Even before release, the response is already at <span class=num>" + Math.round(s.base) + "</span>: the agonist acts on its own.";
+          readout.innerHTML = txt;
+        });
+      });
+      el.querySelector("#clr").addEventListener("click", function () { st.runs = st.runs.slice(-1); redraw(); });
+      redraw();
+      var onR = function () { redraw(); }; window.addEventListener("resize", onR); cleanup.push(function () { window.removeEventListener("resize", onR); });
+      wireFindings(el, P, part);
+      el.querySelector("#next").addEventListener("click", finish);
+    }
+
+    /* ---------- Free lab: choose a part ---------- */
+    function buildFree() {
+      el.innerHTML = '<div class="read"><span class="eyebrow">Free lab</span><h2>Go back to any part</h2><p>Make a prediction first, then test it.</p>' +
+        '<div class="row"><button class="btn2" data-go="1">Part 1: the race</button><button class="btn2" data-go="2">Part 2: adding up</button><button class="btn2" data-go="3">Part 3: receptors and drugs</button></div>' +
+        '<div class="row"><button class="btn" id="next">Back to results</button></div></div>';
+      el.querySelectorAll("[data-go]").forEach(function (b) { b.addEventListener("click", function () { self.jsPsych.finishTrial({ part: "free", go: b.getAttribute("data-go") }); }); });
+      el.querySelector("#next").addEventListener("click", function () { self.jsPsych.finishTrial({ part: "free", go: "results" }); });
+    }
+  };
+
+  /* ---------------- password gates ----------------
+     Each part opens only with the password shown on its RELAY LAB slide, so the
+     class moves together. To change them, edit the three words below and the
+     matching \pwone, \pwtwo, \pwthree in the deck. Letter case and spaces are
+     ignored. This paces the class; it is not security (the words are in the page). */
+  var PASSWORDS = { "1": "cheetah", "2": "chorus", "3": "keyring" };
+  var GATE_INFO = {
+    "1": { title: "Along the axon: the race", slide: "Relay Lab, Part 1: the race" },
+    "2": { title: "Across the gap: adding up", slide: "Relay Lab, Part 2: adding up" },
+    "3": { title: "Keys and locks", slide: "Relay Lab, Part 3: keys and locks" }
+  };
+  var UNLOCK_KEY = "relaylab-unlocked";
+  function loadUnlocked() { try { return JSON.parse(sessionStorage.getItem(UNLOCK_KEY)) || {}; } catch (e) { return {}; } }
+  var unlocked = loadUnlocked();
+  function saveUnlocked() { try { sessionStorage.setItem(UNLOCK_KEY, JSON.stringify(unlocked)); } catch (e) {} }
+  function norm(w) { return String(w || "").toLowerCase().replace(/[^a-z0-9]/g, ""); }
+
+  function PwGate(jsPsych) { this.jsPsych = jsPsych; }
+  PwGate.info = { name: "pw-gate", parameters: { part: { type: PT.STRING, default: "1" } } };
+  PwGate.prototype.trial = function (el, trial) {
+    var self = this, p = trial.part, G = GATE_INFO[p];
+    try { window.scrollTo(0, 0); } catch (e) {}
+    el.innerHTML = '<div class="read gate"><span class="eyebrow">Part ' + p + ' of 3 · locked</span>' +
+      '<h2>' + G.title + '</h2>' +
+      '<div class="calm">Wait for the slide <b>' + G.slide + '</b>. It shows the password for this part. While you wait, look at the slides, not ahead.</div>' +
+      '<form class="pwrow" id="pwform" autocomplete="off"><label for="pw">Password from the slide</label>' +
+      '<div class="inrow"><input id="pw" type="text" inputmode="text" autocapitalize="none" autocorrect="off" spellcheck="false" aria-describedby="pwfb">' +
+      '<button class="btn" type="submit">Unlock</button></div>' +
+      '<div class="fb" id="pwfb" aria-live="polite"></div></form></div>';
+    var inp = el.querySelector("#pw"), fb = el.querySelector("#pwfb"), tries = 0;
+    try { inp.focus({ preventScroll: true }); } catch (e) {}
+    el.querySelector("#pwform").addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      var w = norm(inp.value);
+      if (!w) { fb.className = "fb hint"; fb.textContent = "Type the word shown on the slide."; return; }
+      if (w === norm(PASSWORDS[p])) {
+        unlocked[p] = true; saveUnlocked();
+        self.jsPsych.finishTrial({ gate: p, ok: true });
+      } else {
+        tries++;
+        fb.className = "fb hint";
+        fb.textContent = tries < 3 ? "Not that one. Check the spelling on the slide." : "Still not it. Ask a neighbour or your teacher for the word on the slide.";
+        inp.select();
+      }
+    });
+  };
+  function gated(p) {   // the gate shows only if this part has not been unlocked in this tab
+    return { timeline: [{ type: PwGate, part: p }], conditional_function: function () { return !unlocked[p]; } };
+  }
+
+  /* ---------------- pages ---------------- */
+  var jsPsych = initJsPsych({ display_element: target });
+  var welcome = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus:
+      '<div class="read"><span class="eyebrow">Sessions 10–12 · how signals travel and cross</span>' +
+      '<h2>Relay Lab: from one neuron to the next</h2>' +
+      '<p>A spike has to travel along the axon, cross a gap, and change the next cell. This lab lets you test each step. Use it beside the slides: each part matches a slide.</p>' +
+      '<ol class="partlist"><li><b>The race</b>: how axon size and myelin set the speed.</li><li><b>Adding up</b>: the steps of a chemical synapse, and how a neuron sums its inputs.</li>' +
+      '<li><b>Keys and locks</b>: receptors, and how drugs copy, block or prolong a transmitter.</li></ol>' +
+      '<div class="calm">Each part takes about 8 minutes. Work alone or with a partner. Questions give instant feedback, and nobody sees your answers. <b>Nothing you do is saved or sent anywhere.</b></div>' +
+      '<div class="calm"><b>Each part is locked.</b> Its password appears on the matching slide, so we all move together. No rush: wait for the slide.</div></div>',
+    choices: ["Continue"]
+  };
+  function partTrial(p) { return { type: RelayLab, part: p }; }
+  function resultsHTML() {
+    var F = LAB.fields, f = function (k, u) { return F[k] == null ? "–" : F[k] + (u ? " " + u : ""); };
+    var rows = [["1 µm bare axon (Part 1)", f("1.c", "m/s")], ["12 µm myelinated", f("1.m12", "m/s")], ["Squid giant axon", f("1.sq", "m/s")], ["12 µm, damaged myelin", f("1.ms", "m/s")],
+      ["Six synapse steps in order (Part 2)", LAB.order ? "done" : "–"], ["Rise from input A alone", f("2.a", "mV")], ["Inputs needed together", f("2.n")], ["Longest gap that still fires", f("2.gap", "ms")]];
+    var line = "speeds " + [F["1.c"], F["1.m12"], F["1.sq"], F["1.ms"]].map(function (v) { return v == null ? "-" : v; }).join("/") + " m/s | EPSP " + (F["2.a"] ?? "-") + " mV | inputs " + (F["2.n"] ?? "-") + " | gap " + (F["2.gap"] ?? "-") + " ms";
+    return '<div class="read"><span class="eyebrow">Your results</span><h2>What you found</h2>' +
+      '<p>Only the numbers you typed and checked appear here.</p><table class="sum">' + rows.map(function (r) { return '<tr><td>' + r[0] + '</td><td class="v">' + r[1] + '</td></tr>'; }).join("") + '</table>' +
+      '<p><b>One line for your booklet or notes:</b></p><div class="copyline" id="copyline">' + line + '</div>' +
+      '<div class="row"><button class="btn2" id="copybtn">Copy line</button><button class="btn2" id="freebtn">Open the free lab</button><button class="btn2" id="againbtn">Start again</button></div>' +
+      '<div class="calm"><b>The big picture.</b> A spike travels fastest along thick, myelinated axons. At the synapse it becomes a chemical, and the receiving neuron adds up many such messages before deciding to fire. Which receptor the chemical meets decides the response, and drugs act by copying, blocking or prolonging it.</div></div>';
+  }
+  var nextAfterResults = null;
+  var results = {
+    type: jsPsychHtmlButtonResponse, stimulus: function () { return resultsHTML(); }, choices: [],
+    on_load: function () {
+      try { window.scrollTo(0, 0); } catch (e) {}
+      var cl = document.getElementById("copyline");
+      document.getElementById("copybtn").addEventListener("click", function () {
+        var txt = cl.textContent, b = this, ok = function () { b.textContent = "Copied"; setTimeout(function () { b.textContent = "Copy line"; }, 1500); };
+        function sel() { var r = document.createRange(); r.selectNodeContents(cl); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "Selected: press Ctrl/Cmd+C"; }
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, sel); else sel();
+      });
+      document.getElementById("freebtn").addEventListener("click", function () { jsPsych.finishTrial({ next: "free" }); });
+      document.getElementById("againbtn").addEventListener("click", function () { jsPsych.finishTrial({ next: "again" }); });
+    }
+  };
+  function lastData() { var d = jsPsych.data.get().values(); return d[d.length - 1] || {}; }
+  var revisit = {   // free lab: choose a part, do it, come back
+    timeline: [partTrial("free"), {
+      timeline: [{ type: RelayLab, part: function () { return lastData().go; } }],
+      conditional_function: function () { var g = lastData().go; return g === "1" || g === "2" || g === "3"; }
+    }],
+    loop_function: function () { var d = lastData(); return d.go !== "results"; }
+  };
+  var resultsLoop = {
+    timeline: [results, { timeline: [revisit], conditional_function: function () { return lastData().next === "free"; } }],
+    loop_function: function () { var d = lastData(); return d.go === "results"; }
+  };
+  var main = {
+    timeline: [gated("1"), partTrial("1"), gated("2"), partTrial("2"), gated("3"), partTrial("3"), resultsLoop],
+    loop_function: function () {
+      var again = lastData().next === "again";
+      if (again) { LAB.fields = {}; LAB.order = false; }
+      return again;
+    }
+  };
+  jsPsych.run([welcome, main]);
+})();
+</script>
+</body>
+</html>

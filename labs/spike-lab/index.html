@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Spike Lab</title>
+<meta name="description" content="A model neuron (Hodgkin-Huxley, 1952) to explore threshold, ion channels, refractoriness and rate coding. Nothing is saved or sent.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: a lab bench. Plot on the left, controls and findings on the right; stacks on phones. */
+:root {
+  --bg: #F3F1EC; --panel: #FFFFFF; --ink: #1C2433; --muted: #5B6475; --rule: #D8D4CB;
+  --accent: #1F3A5F; --ok: #23665A; --warn: #A12F24; --stage: #FBFAF7; --grid: #E6E2D9;
+  --na: #B85A0E; --k: #6A3D9A; --trace: #1F3A5F; --ghost: #9AA6B8; --stim: #23665A;
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", Arial, sans-serif;
+  --font-num: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12161E; --panel: #1A202B; --ink: #E8EAF0; --muted: #A3ABBA; --rule: #2E3646;
+    --accent: #9DB7DD; --ok: #6FC3AE; --warn: #F08A7E; --stage: #161B24; --grid: #273041;
+    --na: #F2994A; --k: #B79CE8; --trace: #E8EAF0; --ghost: #5D6A80; --stim: #6FC3AE;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12161E; --panel: #1A202B; --ink: #E8EAF0; --muted: #A3ABBA; --rule: #2E3646;
+  --accent: #9DB7DD; --ok: #6FC3AE; --warn: #F08A7E; --stage: #161B24; --grid: #273041;
+  --na: #F2994A; --k: #B79CE8; --trace: #E8EAF0; --ghost: #5D6A80; --stim: #6FC3AE;
+  color-scheme: dark;
+}
+html, body { min-height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 17px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 10px;
+}
+*, *::before, *::after { box-sizing: border-box; }
+.app { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
+.topbar { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; border-bottom: 2px solid var(--rule); padding-block: 4px 8px; }
+.topbar h1 { font-size: 1.05rem; margin: 0; color: var(--accent); letter-spacing: 0.02em; }
+.topbar .note { font-size: 0.85rem; color: var(--muted); }
+#jspsych-target { min-height: 70vh; display: flex; flex-direction: column; }
+
+/* jsPsych essentials (inlined) */
+.jspsych-display-element { display: flex; flex-direction: column; font-family: var(--font-body); font-size: 17px; line-height: 1.5; }
+.jspsych-display-element:focus { outline: none; }
+.jspsych-content-wrapper { display: flex; align-items: flex-start; margin: 0 auto; flex: 1 1 100%; width: 100%; }
+.jspsych-content { max-width: 100%; width: 100%; text-align: left; margin: 0 auto !important; }
+.jspsych-btn, .btn {
+  display: inline-block; font: 700 1rem var(--font-body); cursor: pointer;
+  padding: 12px 24px; border-radius: 10px; border: 2px solid var(--accent);
+  background: var(--accent); color: var(--bg); touch-action: manipulation;
+}
+.btn2 { font: 700 0.95rem var(--font-body); padding: 9px 16px; border-radius: 10px; border: 2px solid var(--accent); background: transparent; color: var(--accent); cursor: pointer; }
+.jspsych-btn:focus-visible, .btn:focus-visible, .btn2:focus-visible, input:focus-visible, button:focus-visible { outline: 3px solid var(--na); outline-offset: 2px; }
+.jspsych-html-button-response-btngroup { display: flex; justify-content: center; margin-top: 16px; }
+
+/* reading column */
+.read { max-width: 42rem; margin: 8px auto; display: flex; flex-direction: column; gap: 12px; }
+.read h2 { font-size: 1.6rem; line-height: 1.2; margin: 0; text-wrap: balance; }
+.read p { margin: 0; }
+.eyebrow { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.calm { background: var(--panel); border-left: 4px solid var(--ok); padding: 10px 14px; border-radius: 6px; }
+.partlist { margin: 0; padding-left: 1.3rem; display: flex; flex-direction: column; gap: 4px; }
+
+/* lab bench */
+.bench-head { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+.bench-head h2 { margin: 0; font-size: 1.45rem; line-height: 1.2; }
+.glance { background: var(--panel); border-left: 4px solid var(--na); padding: 8px 12px; border-radius: 6px; font-weight: 700; color: var(--accent); }
+.bench { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+@media (max-width: 860px) { .bench { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 12px 14px; min-width: 0; }
+.card h3 { margin: 0 0 8px; font-size: 0.95rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.plotwrap { position: relative; width: 100%; }
+canvas { display: block; width: 100%; background: var(--stage); border-radius: 8px; }
+.readout { margin-top: 8px; font-size: 1.05rem; font-weight: 700; min-height: 1.6em; }
+.readout .num { font-family: var(--font-num); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.85rem; color: var(--muted); margin-top: 6px; }
+.sw { display: inline-block; width: 18px; height: 4px; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
+.ctrl { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.ctrl label { font-weight: 700; display: flex; justify-content: space-between; gap: 8px; }
+.ctrl .val { font-family: var(--font-num); font-weight: 600; color: var(--accent); }
+input[type=range] { width: 100%; accent-color: var(--accent); min-height: 32px; }
+.toggle { display: flex; align-items: center; gap: 10px; padding: 6px 0; font-weight: 700; }
+.toggle input { width: 22px; height: 22px; accent-color: var(--warn); }
+.toggle small { font-weight: 400; color: var(--muted); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.steps { margin: 0; padding-left: 1.3rem; display: flex; flex-direction: column; gap: 3px; }
+.field { display: flex; flex-direction: column; gap: 3px; margin-bottom: 10px; }
+.field label { font-size: 0.95rem; }
+.field .inrow { display: flex; gap: 8px; align-items: center; }
+.field input { font: 600 1rem var(--font-num); width: 6.5rem; padding: 6px 8px; border-radius: 8px; border: 2px solid var(--rule); background: var(--stage); color: var(--ink); }
+.fb { font-size: 0.9rem; }
+.fb.ok { color: var(--ok); } .fb.hint { color: var(--warn); }
+.q { margin-bottom: 12px; }
+.q p { margin: 0 0 6px; font-weight: 700; }
+.opts { display: flex; flex-direction: column; gap: 6px; }
+.opt { text-align: left; font: 400 0.95rem var(--font-body); padding: 8px 12px; border-radius: 8px; border: 2px solid var(--rule); background: var(--stage); color: var(--ink); cursor: pointer; }
+.opt.right { border-color: var(--ok); }
+.opt.wrong { border-color: var(--warn); }
+.done { background: var(--panel); border: 1px dashed var(--ok); border-radius: 10px; padding: 8px 12px; font-size: 0.95rem; }
+.navrow { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.tiny { font-size: 0.82rem; color: var(--muted); }
+.copyline { font-family: var(--font-num); font-size: 0.98rem; background: var(--panel); border: 1px dashed var(--accent); border-radius: 8px; padding: 10px 12px; user-select: all; overflow-wrap: anywhere; }
+table.sum { border-collapse: collapse; width: 100%; font-size: 0.95rem; }
+table.sum td { border-bottom: 1px solid var(--rule); padding: 6px 4px; vertical-align: top; }
+table.sum td.v { font-family: var(--font-num); text-align: right; white-space: nowrap; }
+.loadmsg { margin: auto; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <h1>Spike Lab</h1>
+    <span class="note">Introduction to Neuroscience · Session 9 · the action potential · nothing is saved or sent</span>
+  </header>
+  <div id="jspsych-target"><p class="loadmsg">Loading the lab…</p></div>
+</div>
+
+<script src="../../lib/jspsych-7.3.4.min.js"></script>
+<script src="../../lib/plugin-html-button-response-1.2.0.min.js"></script>
+<script>
+(function () {
+  "use strict";
+  var target = document.getElementById("jspsych-target");
+  if (typeof initJsPsych !== "function" || typeof jsPsychHtmlButtonResponse === "undefined") {
+    target.innerHTML = '<div class="read"><h2>The lab could not load</h2><p>Check your internet connection and reload this page.</p></div>';
+    return;
+  }
+  var PT = jsPsychModule.ParameterType;
+  var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* =====================================================================
+     The model: Hodgkin & Huxley (1952), squid giant axon at 6.3 C,
+     resting near -65 mV. The "potassium blocker" removes most of the
+     voltage-opened part of the K+ current (like TEA) and keeps the small
+     resting part, so the cell still rests at -65 mV.
+     ===================================================================== */
+  function rates(V) {
+    var an = Math.abs(V + 55) < 1e-6 ? 0.1 : 0.01 * (V + 55) / (1 - Math.exp(-(V + 55) / 10));
+    var bn = 0.125 * Math.exp(-(V + 65) / 80);
+    var am = Math.abs(V + 40) < 1e-6 ? 1.0 : 0.1 * (V + 40) / (1 - Math.exp(-(V + 40) / 10));
+    var bm = 4 * Math.exp(-(V + 65) / 18);
+    var ah = 0.07 * Math.exp(-(V + 65) / 20);
+    var bh = 1 / (1 + Math.exp(-(V + 35) / 10));
+    return { an: an, bn: bn, am: am, bm: bm, ah: ah, bh: bh };
+  }
+  var N0 = 0.3177;   // resting value of the K+ gate n
+  function simulate(Ifun, T, opt) {
+    opt = opt || {};
+    var naScale = opt.naBlock ? 0 : 1, kScale = opt.kBlock ? 0.1 : 1;
+    var gNa = 120 * naScale, gL = 0.3, ENa = 50, EK = -77, EL = -54.387, dt = 0.01;
+    var V = -65, r = rates(V);
+    var m = r.am / (r.am + r.bm), h = r.ah / (r.ah + r.bh), n = r.an / (r.an + r.bn);
+    var out = { t: [], V: [], gna: [], gk: [], I: [] };
+    var steps = Math.round(T / dt);
+    for (var i = 0; i <= steps; i++) {
+      var t = i * dt, I = Ifun(t);
+      r = rates(V);
+      m += dt * (r.am * (1 - m) - r.bm * m);
+      h += dt * (r.ah * (1 - h) - r.bh * h);
+      n += dt * (r.an * (1 - n) - r.bn * n);
+      var gna = gNa * m * m * m * h;
+      var gk = 36 * (Math.pow(N0, 4) + kScale * (Math.pow(n, 4) - Math.pow(N0, 4)));
+      V += dt * (I - gna * (V - ENa) - gk * (V - EK) - gL * (V - EL));
+      if (i % 5 === 0) { out.t.push(t); out.V.push(V); out.gna.push(gna); out.gk.push(gk); out.I.push(I); }
+    }
+    return out;
+  }
+  function spikeTimes(o) {
+    var s = [];
+    for (var i = 1; i < o.V.length; i++) if (o.V[i - 1] < 0 && o.V[i] >= 0) s.push(o.t[i]);
+    return s;
+  }
+  function timeAboveZero(o) {
+    var up = null;
+    for (var i = 1; i < o.V.length; i++) {
+      if (up === null && o.V[i - 1] < 0 && o.V[i] >= 0) up = o.t[i];
+      else if (up !== null && o.V[i - 1] >= 0 && o.V[i] < 0) return o.t[i] - up;
+    }
+    return null;
+  }
+  function maxOf(a) { var m = -Infinity; for (var i = 0; i < a.length; i++) if (a[i] > m) m = a[i]; return m; }
+  function fmtmV(v) { var r = Math.round(v); return (r > 0 ? "+" : (r < 0 ? "−" : "")) + Math.abs(r) + " mV"; }
+  function fmt1(v) { return (Math.round(v * 10) / 10).toFixed(1); }
+
+  /* stimulus recipes. Strength is an arbitrary 0-10 scale. */
+  var PULSE_GAIN = 1.6;                                  // 1-ms pulse: uA/cm2 per strength unit
+  function stepCurrent(s) { return 4 + 4.6 * (s - 1); }  // steady 200-ms stimulus
+  function recipe(mode, s, gap) {
+    if (mode === "pulse") return { T: 40, f: function (t) { return (t >= 5 && t < 6) ? PULSE_GAIN * s : 0; } };
+    if (mode === "pair") return { T: 50, f: function (t) { return ((t >= 5 && t < 6) || (t >= 5 + gap && t < 6 + gap)) ? PULSE_GAIN * s : 0; } };
+    return { T: 230, f: function (t) { return (t >= 10 && t < 210) ? (s > 0 ? stepCurrent(s) : 0) : 0; } };
+  }
+  var GNA_SCALE = 40, GK_SCALE = 12;   // fixed scales for the "doors" panel (unblocked peaks are about 35 and 11)
+
+  /* ---------- drawing ---------- */
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  function setupCanvas(cv, cssHeight) {
+    var w = cv.parentElement.clientWidth, dpr = window.devicePixelRatio || 1;
+    cv.style.height = cssHeight + "px";
+    cv.width = Math.round(w * dpr); cv.height = Math.round(cssHeight * dpr);
+    var ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx: ctx, w: w, h: cssHeight };
+  }
+  function drawVoltage(cv, runs, T, upto) {
+    var S = setupCanvas(cv, cv.parentElement.clientWidth < 520 ? 230 : 290), ctx = S.ctx;
+    var L = 46, R = 10, Tp = 10, B = 52, stimH = 16;
+    var W = S.w - L - R, H = S.h - Tp - B;
+    var y = function (v) { return Tp + (60 - v) / 150 * H; };   // -90 .. +60 mV
+    var x = function (t) { return L + t / T * W; };
+    ctx.clearRect(0, 0, S.w, S.h);
+    ctx.font = "12px " + css("--font-num"); ctx.fillStyle = css("--muted"); ctx.strokeStyle = css("--grid"); ctx.lineWidth = 1;
+    [-80, -60, -40, -20, 0, 20, 40].forEach(function (v) {
+      ctx.beginPath(); ctx.moveTo(L, y(v)); ctx.lineTo(L + W, y(v)); ctx.stroke();
+      ctx.textAlign = "right"; ctx.textBaseline = "middle"; ctx.fillText(v > 0 ? "+" + v : String(v), L - 6, y(v));
+    });
+    var stepT = T > 100 ? 50 : 10;
+    for (var tt = 0; tt <= T + 0.01; tt += stepT) {
+      ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.fillText(String(tt), x(tt), Tp + H + stimH + 8);
+    }
+    ctx.textAlign = "left"; ctx.fillText("mV", 4, Tp - 2 + 4);
+    ctx.textAlign = "right"; ctx.fillText("time (ms)", L + W, Tp + H + stimH + 24);
+    // resting line
+    ctx.setLineDash([4, 4]); ctx.strokeStyle = css("--muted");
+    ctx.beginPath(); ctx.moveTo(L, y(-65)); ctx.lineTo(L + W, y(-65)); ctx.stroke(); ctx.setLineDash([]);
+    ctx.textAlign = "left"; ctx.textBaseline = "bottom"; ctx.fillStyle = css("--muted"); ctx.fillText("rest", L + 4, y(-65) - 2);
+    // traces: ghosts first
+    runs.forEach(function (o, k) {
+      var last = (k === runs.length - 1);
+      var n = last && upto != null ? Math.min(upto, o.t.length) : o.t.length;
+      ctx.strokeStyle = last ? css("--trace") : css("--ghost"); ctx.lineWidth = last ? 2.4 : 1.4;
+      ctx.beginPath();
+      for (var i = 0; i < n; i++) { var px = x(o.t[i]), py = y(Math.max(-90, Math.min(60, o.V[i]))); if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py); }
+      ctx.stroke();
+    });
+    // stimulus strip
+    var cur = runs[runs.length - 1];
+    var sy = Tp + H + 4;
+    ctx.fillStyle = css("--grid"); ctx.fillRect(L, sy, W, stimH);
+    if (cur) {
+      ctx.fillStyle = css("--stim");
+      for (var i = 0; i < cur.t.length; i++) if (cur.I[i] > 0) ctx.fillRect(x(cur.t[i]), sy, Math.max(1.5, W / cur.t.length + 0.5), stimH);
+    }
+    ctx.fillStyle = css("--muted"); ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.font = "11px " + css("--font-body");
+    ctx.fillText("push", 6, sy + stimH / 2);
+  }
+  function drawDoors(cv, o, T, upto, blocks) {
+    var S = setupCanvas(cv, 120), ctx = S.ctx;
+    var L = 46, R = 10, Tp = 8, B = 10, W = S.w - L - R, H = S.h - Tp - B;
+    var x = function (t) { return L + t / T * W; };
+    ctx.clearRect(0, 0, S.w, S.h);
+    ctx.strokeStyle = css("--grid"); ctx.beginPath(); ctx.moveTo(L, Tp + H); ctx.lineTo(L + W, Tp + H); ctx.stroke();
+    if (!o) return;
+    var n = upto != null ? Math.min(upto, o.t.length) : o.t.length;
+    [["gna", GNA_SCALE, "--na"], ["gk", GK_SCALE, "--k"]].forEach(function (s) {
+      ctx.strokeStyle = css(s[2]); ctx.lineWidth = 2.4; ctx.beginPath();
+      for (var i = 0; i < n; i++) { var px = x(o.t[i]), py = Tp + H - Math.min(1, o[s[0]][i] / s[1]) * H; if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py); }
+      ctx.stroke();
+    });
+    ctx.font = "11px " + css("--font-body"); ctx.fillStyle = css("--muted"); ctx.textAlign = "left"; ctx.textBaseline = "top";
+    ctx.fillText("doors", 4, Tp); ctx.fillText("open", 4, Tp + 13);
+    ctx.textAlign = "right"; if (blocks.naBlock) { ctx.fillStyle = css("--na"); ctx.fillText("Na⁺ doors blocked", L + W, Tp); }
+    if (blocks.kBlock) { ctx.fillStyle = css("--k"); ctx.fillText("most K⁺ doors blocked", L + W, Tp + (blocks.naBlock ? 14 : 0)); }
+  }
+  function drawRatePlot(cv, pts) {
+    var S = setupCanvas(cv, 170), ctx = S.ctx;
+    var L = 52, R = 10, Tp = 10, B = 32, W = S.w - L - R, H = S.h - Tp - B;
+    var x = function (s) { return L + s / 10 * W; }, y = function (r) { return Tp + H - r / 150 * H; };
+    ctx.clearRect(0, 0, S.w, S.h);
+    ctx.font = "11px " + css("--font-num"); ctx.fillStyle = css("--muted"); ctx.strokeStyle = css("--grid");
+    [0, 50, 100, 150].forEach(function (r) { ctx.beginPath(); ctx.moveTo(L, y(r)); ctx.lineTo(L + W, y(r)); ctx.stroke(); ctx.textAlign = "right"; ctx.textBaseline = "middle"; ctx.fillText(String(r), L - 5, y(r)); });
+    for (var s = 0; s <= 10; s += 2) { ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.fillText(String(s), x(s), Tp + H + 4); }
+    ctx.textAlign = "right"; ctx.fillText("stimulus strength", L + W, Tp + H + 17);
+    ctx.save(); ctx.translate(10, Tp + H / 2); ctx.rotate(-Math.PI / 2); ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.fillText("spikes/s", 0, 0); ctx.restore();
+    ctx.fillStyle = css("--accent");
+    Object.keys(pts).forEach(function (k) { ctx.beginPath(); ctx.arc(x(+k), y(pts[k]), 5, 0, Math.PI * 2); ctx.fill(); });
+  }
+
+  /* ---------- optional clicks for spikes (off by default, soft) ---------- */
+  var audioCtx = null;
+  function playClicks(times, T) {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      var t0 = audioCtx.currentTime + 0.05, slow = (T > 100) ? 1 : 10;   // pulses slowed down 10x so you can hear them
+      times.forEach(function (t) {
+        var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+        o.type = "triangle"; o.frequency.value = 900;
+        var at = t0 + t / 1000 * slow;
+        g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(0.12, at + 0.002); g.gain.exponentialRampToValueAtTime(0.0001, at + 0.02);
+        o.connect(g); g.connect(audioCtx.destination); o.start(at); o.stop(at + 0.03);
+      });
+    } catch (e) {}
+  }
+
+  /* ---------- what each part asks ---------- */
+  var LAB = { fields: {}, answers: {}, rates: {} };
+  var PARTS = {
+    1: {
+      eyebrow: "Part 1 of 4 · slides: “Threshold: all or none”",
+      title: "Find the threshold",
+      glance: "A neuron fires only if it is pushed past a threshold. Then the spike is always the same size.",
+      mode: "pulse", controls: ["strength"], startS: 2, doors: false,
+      steps: ["Set a strength and press <b>Stimulate</b>. Each press gives the neuron one short push (1 ms).",
+              "Find the <b>weakest</b> strength that makes a spike.",
+              "Note the spike’s peak there, then at strength 10."],
+      fields: [
+        { id: "thr", label: "Weakest strength that makes a spike", unit: "", target: 4.5, tol: 0.01,
+          hintLow: "At that strength the model does not fire. Try a little stronger.", hintHigh: "That fires, but a weaker push may too. Try a little weaker." },
+        { id: "peakThr", label: "Peak at that strength", unit: "mV", target: 37, tol: 3, hintLow: "Check the readout under the plot.", hintHigh: "Check the readout under the plot." },
+        { id: "peak10", label: "Peak at strength 10", unit: "mV", target: 41, tol: 3, hintLow: "Check the readout under the plot.", hintHigh: "Check the readout under the plot." }
+      ],
+      questions: [
+        { id: "allnone", q: "Compare the two peaks.", options: ["The stronger push made a much taller spike", "They were about the same height", "The weaker push made a taller spike"], correct: 1,
+          explain: "This is the <b>all-or-none</b> law: below threshold, no spike; above it, a full-size spike. A bigger push does not make a bigger spike." }
+      ],
+      done: "You have found the threshold and written the two peaks in your booklet (page 4)."
+    },
+    2: {
+      eyebrow: "Part 2 of 4 · slides: “The two doors”",
+      title: "Watch the doors, then block them",
+      glance: "Sodium doors open first and bring the voltage up. Potassium doors open later and bring it down.",
+      mode: "pulse", controls: ["strength", "blockers"], startS: 8, doors: true,
+      steps: ["Press <b>Stimulate</b> and watch the lower panel: which doors open first?",
+              "Tick the <b>sodium blocker</b> and stimulate again.",
+              "Untick it, tick the <b>potassium blocker</b>, and stimulate again."],
+      fields: [
+        { id: "above0", label: "Time above 0 mV, no blockers", unit: "ms", target: 1.2, tol: 0.35, hintLow: "Use the readout (no blockers ticked).", hintHigh: "Use the readout (no blockers ticked)." },
+        { id: "above0K", label: "Time above 0 mV, potassium blocker", unit: "ms", target: 2.6, tol: 0.4, hintLow: "Tick only the potassium blocker, then read the readout.", hintHigh: "Tick only the potassium blocker, then read the readout." }
+      ],
+      questions: [
+        { id: "first", q: "Which doors open first?", options: ["Sodium (Na⁺)", "Potassium (K⁺)", "Both at the same moment"], correct: 0,
+          explain: "Sodium doors open within a fraction of a millisecond, then shut again by themselves. Potassium doors open later and more slowly." },
+        { id: "ttx", q: "With the sodium blocker (like puffer-fish TTX), what happens?", options: ["A bigger spike", "No spike at all", "A longer spike"], correct: 1,
+          explain: "No sodium can rush in, so the voltage cannot shoot up. This is how TTX and the dentist’s lidocaine work (Session 7)." },
+        { id: "tea", q: "With the potassium blocker (like the chemical TEA), the spike…", options: ["lasts longer", "disappears", "gets shorter"], correct: 0,
+          explain: "Potassium leaving is what brings the voltage back down quickly. With most potassium doors blocked, the way down is slow." }
+      ],
+      done: "You have answered the three questions and filled in the two times (booklet page 5)."
+    },
+    3: {
+      eyebrow: "Part 3 of 4 · slides: “A pause after every spike”",
+      title: "Can it fire again straight away?",
+      glance: "After a spike, a neuron needs a short rest before it can fire again: the refractory period.",
+      mode: "pair", controls: ["strength", "gap"], startS: 8, startGap: 4, doors: false,
+      steps: ["Two pushes now, separated by a gap. Start with strength 8 and a short gap.",
+              "Make the gap longer, one step at a time, until <b>both</b> pushes make a spike.",
+              "Now set strength 10. Does the second spike work with a shorter gap?"],
+      fields: [
+        { id: "gap8", label: "Shortest gap for two spikes, strength 8", unit: "ms", target: 13, tol: 0.01, hintLow: "At that gap the second push fails. Try a longer gap.", hintHigh: "That works, but a shorter gap may too. Try one step shorter." },
+        { id: "gap10", label: "Shortest gap for two spikes, strength 10", unit: "ms", target: 12, tol: 0.01, hintLow: "At that gap the second push fails. Try a longer gap.", hintHigh: "That works, but a shorter gap may too. Try one step shorter." }
+      ],
+      questions: [
+        { id: "stronger", q: "Why can a stronger push fire again sooner?", options: ["Stronger pushes make bigger spikes", "Some sodium doors are ready again, but it takes more push to open enough of them", "The pump works faster"], correct: 1,
+          explain: "This is the <b>relative refractory period</b>: firing is possible, but harder." },
+        { id: "absolute", q: "Very soon after a spike, could any push, however strong, fire the neuron?", options: ["Yes, if it is strong enough", "No: the sodium doors are shut and locked for a moment"], correct: 1,
+          explain: "This is the <b>absolute refractory period</b>. It is why spikes stay separate, and why they travel in one direction only." }
+      ],
+      done: "You have found both gaps and answered the two questions (booklet page 6).",
+      note: "This model is a squid axon in cold sea water, so its pauses are longer than in your brain. In a warm mammalian neuron the absolute refractory period is about 1 ms."
+    },
+    4: {
+      eyebrow: "Part 4 of 4 · slides: “The language of spikes”",
+      title: "Stronger means faster",
+      glance: "Spikes are all the same size, so a stronger stimulus is signalled by more spikes per second.",
+      mode: "step", controls: ["strength", "sound"], startS: 3, doors: false,
+      steps: ["Now the push stays on for 200 ms, like a weight hanging on a muscle.",
+              "Try strengths 1, 3, 5, 7 and 10. Each dot on the small plot is one try.",
+              "Copy the spikes per second into the table on booklet page 7."],
+      fields: [],
+      questions: [
+        { id: "rate", q: "As the stimulus gets stronger, the spikes get…", options: ["taller", "more frequent", "longer"], correct: 1,
+          explain: "This is <b>rate coding</b>, discovered by Edgar Adrian in the 1920s: the firing rate signals how strong a stimulus is." },
+        { id: "code", q: "If every spike looks the same, how can the brain tell a heavy weight from a light one?", options: ["From how tall the spikes are", "From how many spikes arrive per second", "It cannot"], correct: 1,
+          explain: "The information is in the number and timing of spikes, not their shape." }
+      ],
+      done: "You have five dots on the plot and the table on booklet page 7 is filled in.",
+      note: "A real sensory neuron can fire slowly at weak stimuli. This squid-axon model jumps straight to about 65 spikes per second, but the rule is the same: stronger means faster."
+    },
+    free: {
+      eyebrow: "Free lab", title: "Try anything",
+      glance: "All the controls at once. Make a prediction first, then test it.",
+      mode: "pulse", controls: ["mode", "strength", "gap", "blockers", "sound"], startS: 8, startGap: 15, doors: true,
+      steps: ["Choose one push, two pushes or a steady push.", "Predict what you will see, then press <b>Stimulate</b>."],
+      fields: [], questions: [], done: "Press <b>Back to results</b> when you are finished."
+    }
+  };
+
+  /* ---------- the lab plugin ---------- */
+  function SpikeLab(jsPsych) { this.jsPsych = jsPsych; }
+  SpikeLab.info = { name: "spike-lab", parameters: { part: { type: PT.STRING, default: "1" } } };
+  SpikeLab.prototype.trial = function (el, trial) {
+    var self = this, P = PARTS[trial.part];
+    try { window.scrollTo(0, 0); } catch (e) {}
+    var state = { s: P.startS, gap: P.startGap || 10, naBlock: false, kBlock: false, sound: false, mode: P.mode, runs: [], tries: 0, ratePts: LAB.rates };
+    var has = function (c) { return P.controls.indexOf(c) >= 0; };
+
+    var html = '<div class="bench-head"><span class="eyebrow">' + P.eyebrow + '</span><h2>' + P.title + '</h2><div class="glance">' + P.glance + '</div></div>';
+    html += '<div class="bench"><div class="card"><h3>Voltage inside the neuron</h3><div class="plotwrap"><canvas id="cv" aria-label="Voltage trace" role="img"></canvas></div>';
+    if (P.doors) html += '<div class="plotwrap" style="margin-top:8px"><canvas id="cvd" aria-label="Sodium and potassium doors" role="img"></canvas></div>' +
+      '<div class="legend"><span><span class="sw" style="background:var(--na)"></span>sodium (Na⁺) doors open</span><span><span class="sw" style="background:var(--k)"></span>potassium (K⁺) doors open</span></div>';
+    html += '<div class="readout" id="readout" aria-live="polite">Press <b>Stimulate</b> to begin.</div>';
+    html += '<div class="legend"><span><span class="sw" style="background:var(--trace)"></span>this try</span><span><span class="sw" style="background:var(--ghost)"></span>your last tries</span><span><span class="sw" style="background:var(--stim)"></span>push (stimulus)</span></div>';
+    if (P.mode === "step" || has("mode")) html += '<div id="ratebox" style="margin-top:10px' + (P.mode === "step" ? "" : ";display:none") + '"><h3>Your tries: spikes per second</h3><div class="plotwrap"><canvas id="cvr" role="img" aria-label="Firing rate against stimulus strength"></canvas></div></div>';
+    if (P.note) html += '<p class="tiny" style="margin:8px 0 0">' + P.note + '</p>';
+    html += '</div><div style="display:flex;flex-direction:column;gap:12px;min-width:0">';
+    // steps
+    html += '<div class="card"><h3>Steps</h3><ol class="steps">' + P.steps.map(function (s) { return "<li>" + s + "</li>"; }).join("") + '</ol></div>';
+    // controls
+    html += '<div class="card"><h3>Controls</h3>';
+    if (has("mode")) html += '<div class="ctrl" role="radiogroup" aria-label="Kind of push"><label>Kind of push</label><div class="row">' +
+      ['pulse', 'pair', 'step'].map(function (m) { return '<label class="toggle" style="font-weight:400"><input type="radio" name="mode" value="' + m + '"' + (m === state.mode ? " checked" : "") + '> ' + ({ pulse: "one push", pair: "two pushes", step: "steady push" })[m] + '</label>'; }).join("") + '</div></div>';
+    if (has("strength")) html += '<div class="ctrl"><label for="s">Strength <span class="val" id="sv"></span></label><input id="s" type="range" min="0" max="10" step="0.5" value="' + state.s + '"></div>';
+    if (has("gap")) html += '<div class="ctrl" id="gapctrl"><label for="g">Gap between pushes <span class="val" id="gv"></span></label><input id="g" type="range" min="2" max="25" step="1" value="' + state.gap + '"></div>';
+    if (has("blockers")) html += '<label class="toggle"><input type="checkbox" id="nab"> Sodium blocker <small>(like TTX)</small></label><label class="toggle"><input type="checkbox" id="kb"> Potassium blocker <small>(like TEA)</small></label>';
+    if (has("sound")) html += '<label class="toggle" style="color:var(--ink)"><input type="checkbox" id="snd" style="accent-color:var(--accent)"> Hear spikes as soft clicks <small>(off by default)</small></label>';
+    html += '<div class="row" style="margin-top:6px"><button class="btn" id="go">Stimulate</button><button class="btn2" id="clr">Clear old traces</button></div></div>';
+    // findings
+    if (P.fields.length || P.questions.length) {
+      html += '<div class="card"><h3>Your findings</h3>';
+      P.fields.forEach(function (f) {
+        html += '<div class="field"><label for="f_' + f.id + '">' + f.label + '</label><div class="inrow"><input id="f_' + f.id + '" inputmode="decimal" autocomplete="off"> <span>' + f.unit + '</span><button class="btn2" data-check="' + f.id + '">Check</button></div><div class="fb" id="fb_' + f.id + '" aria-live="polite"></div></div>';
+      });
+      P.questions.forEach(function (q) {
+        html += '<div class="q" data-q="' + q.id + '"><p>' + q.q + '</p><div class="opts">' + q.options.map(function (o, i) { return '<button class="opt" data-i="' + i + '">' + o + '</button>'; }).join("") + '</div><div class="fb" aria-live="polite"></div></div>';
+      });
+      html += '</div>';
+    }
+    html += '<div class="done"><b>You are done when:</b> ' + P.done + '</div>';
+    html += '</div></div>';
+    html += '<div class="navrow"><span class="tiny">Nothing you do here is saved or sent.</span><button class="btn" id="next">' + (trial.part === "free" ? "Back to results" : (trial.part === "4" ? "See my results →" : "Next part →")) + '</button></div>';
+    el.innerHTML = html;
+
+    var cv = el.querySelector("#cv"), cvd = el.querySelector("#cvd"), cvr = el.querySelector("#cvr"), readout = el.querySelector("#readout");
+    var sIn = el.querySelector("#s"), gIn = el.querySelector("#g");
+    function labelVals() {
+      if (sIn) el.querySelector("#sv").textContent = fmt1(state.s);
+      if (gIn) el.querySelector("#gv").textContent = state.gap + " ms";
+      var gc = el.querySelector("#gapctrl"); if (gc) gc.style.opacity = (state.mode === "pair") ? 1 : 0.45;
+      var rb = el.querySelector("#ratebox"); if (rb) rb.style.display = (state.mode === "step") ? "" : "none";
+    }
+    labelVals();
+    function redraw(upto) {
+      var T = recipe(state.mode, state.s, state.gap).T;
+      drawVoltage(cv, state.runs, T, upto);
+      if (cvd) drawDoors(cvd, state.runs[state.runs.length - 1], T, upto, { naBlock: state.naBlock, kBlock: state.kBlock });
+      if (cvr) drawRatePlot(cvr, LAB.rates);
+    }
+    redraw();
+    var onResize = function () { redraw(); };
+    window.addEventListener("resize", onResize);
+
+    function describe(o) {
+      var sp = spikeTimes(o), pk = maxOf(o.V);
+      if (state.mode === "pulse") {
+        if (!sp.length) return "No spike. The voltage rose to <span class=num>" + fmtmV(pk) + "</span>, then fell back.";
+        var ta = timeAboveZero(o);
+        return "Spike! Peak <span class=num>" + fmtmV(pk) + "</span> · time above 0 mV: <span class=num>" + (ta ? fmt1(ta) : "–") + " ms</span>";
+      }
+      if (state.mode === "pair") {
+        if (sp.length >= 2) return "Both pushes made a spike (gap <span class=num>" + state.gap + " ms</span>).";
+        if (sp.length === 1) return "Only the first push made a spike. The neuron was still recovering.";
+        return "No spike at all. Try a stronger push.";
+      }
+      var rate = sp.length * 5;
+      return "<span class=num>" + sp.length + "</span> " + (sp.length === 1 ? "spike" : "spikes") + " in 200 ms = <span class=num>" + rate + "</span> spikes per second.";
+    }
+    function stimulate() {
+      var rc = recipe(state.mode, state.s, state.gap);
+      var o = simulate(rc.f, rc.T, { naBlock: state.naBlock, kBlock: state.kBlock });
+      if (state.mode === "step") state.runs = []; state.runs.push(o); if (state.runs.length > 4) state.runs.shift();
+      state.tries++;
+      var sp = spikeTimes(o);
+      if (state.mode === "step" && !state.naBlock && !state.kBlock) LAB.rates[String(+fmt1(state.s))] = sp.length * 5;
+      readout.innerHTML = "";
+      if (state.sound && sp.length) playClicks(sp, rc.T);
+      if (reduceMotion) { redraw(); readout.innerHTML = describe(o); return; }
+      var n = o.t.length, start = performance.now(), dur = state.mode === "step" ? 900 : 650;
+      (function frame(now) {
+        var k = Math.min(n, Math.ceil((now - start) / dur * n));
+        redraw(k);
+        if (k < n) requestAnimationFrame(frame); else readout.innerHTML = describe(o);
+      })(start);
+    }
+    el.querySelector("#go").addEventListener("click", stimulate);
+    el.querySelector("#clr").addEventListener("click", function () { state.runs = state.runs.slice(-1); redraw(); });
+    if (sIn) sIn.addEventListener("input", function () { state.s = +sIn.value; labelVals(); });
+    if (gIn) gIn.addEventListener("input", function () { state.gap = +gIn.value; labelVals(); });
+    var nab = el.querySelector("#nab"), kb = el.querySelector("#kb"), snd = el.querySelector("#snd");
+    if (nab) nab.addEventListener("change", function () { state.naBlock = nab.checked; });
+    if (kb) kb.addEventListener("change", function () { state.kBlock = kb.checked; });
+    if (snd) snd.addEventListener("change", function () { state.sound = snd.checked; });
+    el.querySelectorAll('input[name=mode]').forEach(function (r) { r.addEventListener("change", function () { state.mode = r.value; state.runs = []; labelVals(); redraw(); readout.innerHTML = "Press <b>Stimulate</b>."; }); });
+
+    // findings: number checks
+    el.querySelectorAll("[data-check]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var f = P.fields.filter(function (x) { return x.id === b.getAttribute("data-check"); })[0];
+        var raw = el.querySelector("#f_" + f.id).value.replace(",", ".").replace("−", "-").replace(/[^0-9.\-+]/g, "");
+        var v = parseFloat(raw), fb = el.querySelector("#fb_" + f.id);
+        if (isNaN(v)) { fb.className = "fb hint"; fb.textContent = "Type a number first."; return; }
+        LAB.fields[trial.part + "." + f.id] = v;
+        if (Math.abs(v - f.target) <= f.tol + 1e-9) { fb.className = "fb ok"; fb.textContent = "✓ That matches the model."; }
+        else { fb.className = "fb hint"; fb.textContent = v < f.target ? f.hintLow : f.hintHigh; }
+      });
+    });
+    // findings: questions with immediate, kind feedback
+    el.querySelectorAll("[data-q]").forEach(function (box) {
+      var q = P.questions.filter(function (x) { return x.id === box.getAttribute("data-q"); })[0];
+      box.querySelectorAll(".opt").forEach(function (b) {
+        b.addEventListener("click", function () {
+          var i = +b.getAttribute("data-i"), fb = box.querySelector(".fb");
+          var key = trial.part + "." + q.id; if (!(key in LAB.answers)) LAB.answers[key] = (i === q.correct);
+          box.querySelectorAll(".opt").forEach(function (x) { x.classList.remove("right", "wrong"); });
+          if (i === q.correct) { b.classList.add("right"); fb.className = "fb ok"; fb.innerHTML = "✓ Yes. " + q.explain; }
+          else { b.classList.add("wrong"); fb.className = "fb hint"; fb.textContent = "Not quite. Try the lab again, then choose another answer."; }
+        });
+      });
+    });
+    el.querySelector("#next").addEventListener("click", function () {
+      window.removeEventListener("resize", onResize);
+      self.jsPsych.finishTrial({ part: trial.part, tries: state.tries });
+    });
+    try { el.querySelector("#go").focus({ preventScroll: true }); } catch (e) {}
+  };
+
+  /* ---------- pages ---------- */
+  var jsPsych = initJsPsych({ display_element: target });
+  var welcome = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus:
+      '<div class="read"><span class="eyebrow">Session 9 · the action potential</span>' +
+      '<h2>Spike Lab: a model neuron you can poke</h2>' +
+      '<p>This page runs a model neuron. You give it a push (an electrical stimulus) and watch the voltage inside it. Use it beside the slides: each part matches a slide.</p>' +
+      '<ol class="partlist"><li><b>Find the threshold</b>: when does it fire?</li><li><b>Watch the doors</b>: sodium and potassium channels, and two blockers.</li>' +
+      '<li><b>Can it fire again straight away?</b> The pause after a spike.</li><li><b>Stronger means faster</b>: how spikes carry a message.</li></ol>' +
+      '<div class="calm">Each part takes about 6–8 minutes. You can work alone or with a partner. Questions give instant feedback, and nobody sees your answers. <b>Nothing you do is saved or sent anywhere.</b></div>' +
+      '<p class="tiny">The model is the one Alan Hodgkin and Andrew Huxley published in 1952 for the squid giant axon, in sea water at 6.3 °C. Some times are slower than in your own warm brain; the slides say where.</p></div>',
+    choices: ["Start Part 1"]
+  };
+  function partTrial(p) { return { type: SpikeLab, part: p }; }
+  function resultsHTML() {
+    var F = LAB.fields, rows = [
+      ["Threshold strength (Part 1)", F["1.thr"]], ["Peak at threshold", F["1.peakThr"] != null ? F["1.peakThr"] + " mV" : null], ["Peak at strength 10", F["1.peak10"] != null ? F["1.peak10"] + " mV" : null],
+      ["Time above 0 mV, normal (Part 2)", F["2.above0"] != null ? F["2.above0"] + " ms" : null], ["Time above 0 mV, K⁺ blocked", F["2.above0K"] != null ? F["2.above0K"] + " ms" : null],
+      ["Shortest gap, strength 8 (Part 3)", F["3.gap8"] != null ? F["3.gap8"] + " ms" : null], ["Shortest gap, strength 10", F["3.gap10"] != null ? F["3.gap10"] + " ms" : null]
+    ];
+    var rk = Object.keys(LAB.rates).sort(function (a, b) { return a - b; });
+    var rateStr = rk.length ? rk.map(function (k) { return k + "→" + LAB.rates[k]; }).join(", ") : null;
+    rows.push(["Spikes per second by strength (Part 4)", rateStr]);
+    var tbl = '<table class="sum">' + rows.map(function (r) { return '<tr><td>' + r[0] + '</td><td class="v">' + (r[1] == null ? "–" : r[1]) + '</td></tr>'; }).join("") + '</table>';
+    var line = "thr " + (F["1.thr"] ?? "-") + " | peaks " + (F["1.peakThr"] ?? "-") + "/" + (F["1.peak10"] ?? "-") + " | above0 " + (F["2.above0"] ?? "-") + "/" + (F["2.above0K"] ?? "-") + " | gaps " + (F["3.gap8"] ?? "-") + "/" + (F["3.gap10"] ?? "-") + " | rates " + (rk.length ? rk.map(function (k) { return k + ":" + LAB.rates[k]; }).join(" ") : "-");
+    return '<div class="read"><span class="eyebrow">Your results</span><h2>What you found</h2>' +
+      '<p>Only the numbers you typed and checked appear here. Copy anything missing from the lab into your booklet.</p>' + tbl +
+      '<p><b>One line for your booklet or notes:</b></p><div class="copyline" id="copyline">' + line + '</div>' +
+      '<div class="row"><button class="btn2" id="copybtn">Copy line</button><button class="btn2" id="freebtn">Open the free lab</button><button class="btn2" id="againbtn">Start again</button></div>' +
+      '<div class="calm"><b>The big picture.</b> A spike happens only past threshold, and is always the same size. Sodium rushing in brings the voltage up; potassium leaving brings it down. After each spike comes a pause. So the only way to say “stronger” is to fire more often.</div></div>';
+  }
+  var results = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: function () { return resultsHTML(); },
+    choices: [],
+    on_load: function () {
+      try { window.scrollTo(0, 0); } catch (e) {}
+      var cl = document.getElementById("copyline");
+      document.getElementById("copybtn").addEventListener("click", function () {
+        var txt = cl.textContent, b = this;
+        var ok = function () { b.textContent = "Copied"; setTimeout(function () { b.textContent = "Copy line"; }, 1500); };
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, function () { sel(); });
+        else sel();
+        function sel() { var r = document.createRange(); r.selectNodeContents(cl); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "Selected: press Ctrl/Cmd+C"; }
+      });
+      document.getElementById("freebtn").addEventListener("click", function () { jsPsych.finishTrial({ next: "free" }); });
+      document.getElementById("againbtn").addEventListener("click", function () { jsPsych.finishTrial({ next: "again" }); });
+    }
+  };
+  var freeLoop = {
+    timeline: [partTrial("free"), results],
+    loop_function: function (data) { var last = data.values()[data.values().length - 1]; return last && last.next === "free"; }
+  };
+  var main = {
+    timeline: [partTrial("1"), partTrial("2"), partTrial("3"), partTrial("4"), {
+      timeline: [results, { timeline: [freeLoop], conditional_function: function () { var d = jsPsych.data.get().values(); return d[d.length - 1].next === "free"; } }]
+    }],
+    loop_function: function () {
+      var d = jsPsych.data.get().values(), again = d[d.length - 1].next === "again";
+      if (again) { LAB.fields = {}; LAB.answers = {}; for (var k in LAB.rates) delete LAB.rates[k]; }
+      return again;
+    }
+  };
+  jsPsych.run([welcome, main]);
+})();
+</script>
+</body>
+</html>
